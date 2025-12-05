@@ -1,5 +1,6 @@
 import asyncio
-
+import uuid
+import httpx
 import streamlit as st
 
 from components.chat_bubbles import render_user_msg, render_assistant_msg
@@ -14,24 +15,48 @@ from utils.session import (
     clear_chat_history,
 )
 
-# 尝试导入真实 orchestrator；如果没有则使用 mock
-try:
-    from backend.agents.orchestrator import handle_user_message as pipeline_handle_user_message
-    HAS_BACKEND = True
-except Exception:
-    HAS_BACKEND = False
+# ========== Authentication Check ==========
+if not st.session_state.get("authenticated", False):
+    st.error("You must log in first.")
+    st.page_link("pages/0_Login.py", label="Go to Login")
+    st.stop()
 
-    async def pipeline_handle_user_message(user_text: str) -> str:
-        # 简单 mock，方便前端先跑起来
-        await asyncio.sleep(1.0)
-        return f"Mock response for: **{user_text}**\n\n(Replace me with real agent pipeline.)"
+# Load username (for Authorization header)
+username = st.session_state.get("username", "anonymous")
 
-
-# 初始化 session_state
+# Initialize session state keys
 init_state()
 
+# Ensure thread_id exists for this user session
+if "thread_id" not in st.session_state:
+    st.session_state["thread_id"] = str(uuid.uuid4())
 
-# ========== 页面布局 ==========
+thread_id = st.session_state["thread_id"]
+
+
+# ========== Mock API HTTP Call (Async) ==========
+async def send_to_mock_api(message: str):
+    payload = {
+        "message": message,
+        "thread_id": thread_id,
+    }
+
+    headers = {
+        "Authorization": username
+    }
+
+    async with httpx.AsyncClient() as client:
+        resp = await client.post(
+            "http://localhost:9000/chat",   # mock API endpoint
+            json=payload,
+            headers=headers,
+            timeout=15.0
+        )
+        resp.raise_for_status()
+        return resp.json()   # expected: {"message": str, "thread_id": str}
+
+
+# ========== Page Layout ==========
 
 render_header(
     title="Pantry Assistant – Chat",
@@ -42,21 +67,22 @@ col_left, col_right = st.columns([4, 1])
 
 with col_right:
     st.subheader("Controls")
+
     if st.button("Clear chat history"):
         clear_chat_history()
         st.success("Chat history cleared.")
 
     st.markdown(" ")
     st.markdown("**Status**")
-    st.markdown(
-        "- Backend: " + ("✅ connected" if HAS_BACKEND else "⚠ mock mode"),
-    )
+    st.markdown("- Backend: POST /chat (mock API)")
+    st.markdown(f"- User: **{username}**")
+    st.markdown(f"- Thread ID: `{thread_id}`")
 
 with col_left:
     st.subheader("Conversation")
 
 
-# ========== 显示历史聊天记录 ==========
+# ========== Display Chat History ==========
 
 chat_history = get_chat_history()
 
@@ -69,12 +95,12 @@ with chat_container:
             render_assistant_msg(message)
 
 
-# ========== 处理用户输入 ==========
+# ========== User Input Handling ==========
 
 user_input = st.chat_input("What would you like to cook today?")
 
 if user_input:
-    # 记录用户消息
+    # Save user message
     add_chat_message("user", user_input)
     add_log_entry(
         {
@@ -85,34 +111,35 @@ if user_input:
         }
     )
 
-    # 重新渲染用户消息
+    # Render user bubble immediately
     with chat_container:
         render_user_msg(user_input)
 
-    # 显示“思考中”提示
+    # Show thinking indicator
     thinking_placeholder = show_thinking()
 
-    # 调用异步 pipeline
-    async def _run_pipeline():
-        return await pipeline_handle_user_message(user_input)
+    # Call mock API asynchronously
+    async def _call_api():
+        return await send_to_mock_api(user_input)
 
-    assistant_reply = run_async(_run_pipeline())
+    response_json = run_async(_call_api())
+    assistant_reply = response_json["message"]
 
-    # 清除“思考中”
+    # Remove thinking indicator
     clear_thinking(thinking_placeholder)
 
-    # 保存助手消息
+    # Save assistant message
     add_chat_message("assistant", assistant_reply)
     add_log_entry(
         {
             "role": "assistant",
             "message": assistant_reply,
-            "source": "pipeline",
+            "source": "mock_api",
             "event": "assistant_reply",
         }
     )
 
-    # 显示助手回复
+    # Render assistant bubble
     with chat_container:
         render_assistant_msg(assistant_reply)
 

@@ -3,6 +3,12 @@ import streamlit as st
 from components.layout import render_header, render_footer
 from utils.session import init_state, get_logs, clear_logs
 
+if not st.session_state.get("authenticated", False):
+    st.error("You must log in first.")
+    st.page_link("pages/0_Login.py", label="Go to Login")
+    st.stop()
+
+
 # 初始化 session_state
 init_state()
 
