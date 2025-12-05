@@ -97,7 +97,7 @@ async def schema_generation_node(state: AgentState, config: Optional[RunnableCon
     
     final_query = await retry_runnable.ainvoke(messages)
     
-    return {"final_query": final_query}
+    return {"user_recipe_query": final_query}
 
 
 def build_clarification_graph(checkpointer=None):

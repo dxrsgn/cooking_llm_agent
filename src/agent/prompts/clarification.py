@@ -5,15 +5,15 @@ Your goal is to understand what the user wants and determine if you have enough 
 </Task>
 
 <Instructions>
-Analyze the user's request and conversation history. Determine if you need to ask clarifying questions.
-- If the request is clear and complete, set should_continue to True
-- If the request is vague, missing important details, or needs clarification, set should_continue to False and provide a helpful question
+Analyze the user's request and conversation history. Determine if you need to ask clarifying questions.  
+- If the request is clear and complete, set should_continue to True  
+- If the request is vague, missing important details, or needs clarification, set should_continue to False and provide a helpful question  
+- Do not repeat yourself. If user has already responded to one of your questions, do not ask the same question again. Though you can ask follow-up questions if needed.   
 
 Consider asking about:
 - Specific ingredients or dishes
 - Dietary preferences or restrictions
 - Cooking time or difficulty level
-- Number of servings
 - Cuisine type or style
 - Any allergies or dietary restrictions
 
@@ -37,31 +37,34 @@ Ensure your output is valid JSON that conforms to the provided schema structure.
 
 def get_schema_generation_prompt(user_context: str = "", conversation_history: str = "", reasoning: bool = True) -> str:
     return f"""<Task>
-You are an expert at extracting structured information from user recipe requests.
-Your task is to analyze the complete conversation and generate a structured query schema.
-</Task>
+You are an expert at extracting structured information from user recipe requests.  
+Your task is to analyze the complete conversation and generate a structured response with the summary of user's request, preferences, and restrictions.  
+</Task>  
 
 <Instructions>
-Based on the entire conversation history, extract:
-- The main recipe query or request (summarized)
-- User's dietary preferences (e.g., vegetarian, vegan, keto, etc.)
-- Dietary restrictions or allergies (e.g., gluten-free, nut allergies, etc.)
+Based on the entire conversation history, extract:  
+  1. Summary of user request  
+  2. User's cooking preferences. E.g. specific cusine, dish, ingredients and other details.  
+  3. Dietary restrictions or allergies (e.g., gluten-free, nut allergies, vegetarian, etc.)
 
-Be thorough and extract all relevant information from the conversation.
+Be thorough and extract all relevant information from the conversation.  
 
-Note: The user has existing preferences and allergies stored in their profile. Include these in your extraction unless the conversation explicitly indicates different preferences for this specific recipe request. Combine information from the conversation with the user's stored profile data.
+The user had existing preferences and allergies stored in their profile. Combined these with the information from the conversation to generate the merged schema, 
+unless the conversation explicitly details different preferences for this specific recipe request.  
 </Instructions>
 
-{user_context}
+<Previous user preferences and allergies>  
+The user has existing preferences and allergies stored in their profile.  
+{user_context}  
+</Previous user preferences and allergies>  
 
-<Conversation History>
-{conversation_history}
-</Conversation History>
+<Conversation History>  
+{conversation_history}  
+</Conversation History>  
 
-{"/no_think" if not reasoning else ""}
-
-<Output format>
-Return a structured query schema with the user's request, preferences, and restrictions.
-Ensure your output is valid JSON that conforms to the provided schema structure.
-</Output format>
+<Output format>  
+Return a structured response with the summary of user's request, preferences, and restrictions.  
+Ensure your output is valid JSON that conforms to the provided schema structure.  
+</Output format>  
+{"/no_think" if not reasoning else ""}  
 """
