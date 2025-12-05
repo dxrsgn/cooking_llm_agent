@@ -47,3 +47,4 @@ ignore_missing_imports = true
 
 [tool.poetry.scripts]
 run_api = "src.api_handler.api_run:main"
+agent_cli = "agent_cli:main"
