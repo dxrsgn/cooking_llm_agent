@@ -6,12 +6,18 @@ authors = ["eshmelev"]
 packages = [{include = "src"}]
 
 [tool.poetry.dependencies]
-python = "^3.10"
-httpx = "^0.28.1"
+python = ">=3.10,<3.13"
 pydantic = "^2.12.5"
 pydantic-settings = "^2.12.0"
 tqdm = "^4.67.1"
 async-lru = "^2.0.5"
+langchain-core = "^1.0.4"
+langchain-openai = "^1.0.3"
+langgraph = "^1.0.3"
+python-dotenv = "^1.0.0"
+arize-phoenix = ">=12.15.0,<13.0.0"
+opentelemetry-instrumentation-httpx = "*"
+openinference-instrumentation-langchain = "*"
 
 
 [tool.poetry.group.dev.dependencies]
