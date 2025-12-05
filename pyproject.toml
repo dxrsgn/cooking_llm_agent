@@ -1,0 +1,43 @@
+[tool.poetry]
+name = "cooking-llm-agent"
+version = "0.1.0"
+description = "cooking llm agent"
+authors = ["eshmelev"]
+packages = [{include = "src"}]
+
+[tool.poetry.dependencies]
+python = "^3.10"
+httpx = "^0.28.1"
+pydantic = "^2.12.5"
+pydantic-settings = "^2.12.0"
+tqdm = "^4.67.1"
+async-lru = "^2.0.5"
+
+
+[tool.poetry.group.dev.dependencies]
+black = "^25.11.0"
+ruff = "^0.14.7"
+mypy = "^1.19.0"
+pytest = "^9.0.1"
+ipykernel = "^7.1.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.black]
+line-length = 100
+target-version = ["py311"]
+
+[tool.ruff]
+line-length = 100
+select = ["E", "F", "I", "UP"]
+fix = true
+
+[tool.mypy]
+python_version = "3.11"
+strict = false
+ignore_missing_imports = true
+
+[tool.poetry.scripts]
+run_api = "src.api_handler.api_run:main"

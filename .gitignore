@@ -45,3 +45,6 @@ __pypackages__/
 
 .mypy_cache/
 
+.env
+__pycache__/
+.poetry/
