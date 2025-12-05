@@ -45,7 +45,7 @@ async def clarification_node(state: AgentState, config: Optional[RunnableConfig]
     
     decision = await retry_runnable.ainvoke(messages)
     
-    if decision.ask_more_questions:
+    if decision.ask_more_questions == "yes":
         return Command(
             goto="asking_question",
             update={"messages": [AIMessage(content=decision.question)]},

@@ -1,4 +1,5 @@
 from pydantic import BaseModel, Field
+from typing import Literal
 
 
 class UserProfile(BaseModel):
@@ -16,8 +17,8 @@ class UserRecipeQuery(BaseModel):
 
 class ClarificationDecision(BaseModel):
     """Schema for clarification decision"""
-    ask_more_questions: bool = Field(
+    ask_more_questions: Literal["yes", "no"] = Field(
         ...,
-        description="True if you need to ask more questions to the user, False if you have enough information to generate the schema"
+        description="yes if you need to ask more questions to the user, no if you have enough information to generate the schema"
     )
     question: str = Field(default="", description="The question to ask the user if ask_more_questions is True")
