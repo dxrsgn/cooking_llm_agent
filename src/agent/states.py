@@ -1,7 +1,8 @@
+from operator import add
 from typing import Annotated
 from langgraph.graph.message import add_messages
 from pydantic import BaseModel
-from .models import UserProfile, UserRecipeQuery
+from .models import UserProfile, UserRecipeQuery, RecipeSelection
 from src.api_handler.datamodels import Recipe
 
 
@@ -11,6 +12,11 @@ class AgentState(BaseModel):
     user_recipe_query: UserRecipeQuery | None = None
     recipes: list[Recipe] = []
 
-class RecipeSearchState(BaseModel):
+class RecipeSearchSubgraphState(BaseModel):
+    iterations: int = 0
+    user_recipe_query: UserRecipeQuery
     messages: Annotated[list, add_messages]
-    recipes: list[Recipe] = []
+    current_recipes: list[Recipe] = []
+    # add reducer to accumulate selected recipes
+    selected_recipes: Annotated[list[Recipe], add] = []
+    recipe_selection: RecipeSelection | None = None

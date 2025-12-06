@@ -2,6 +2,7 @@ import httpx
 from src.api_handler.datamodels import Recipe, RecipeSearchQuery
 import asyncio
 from src.api_handler.constants import RECIPES_URL, MAX_RECIPES
+from tenacity import retry, stop_after_attempt, wait_exponential
 from src.api_handler.recipes_funcs import (map_mealdb_meal_to_recipe, 
                                            recipe_has_anchor, 
                                            recipe_has_excluded_ingredient, 
@@ -21,6 +22,7 @@ class RecipesAPIClient:
     async def close(self):
         await self._client.aclose()
 
+    @retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=4, max=15))
     async def _search_by_name(self, query: str) -> list[Recipe]:
         resp = await self._client.get("/search.php", params={"s": query})
         resp.raise_for_status()
@@ -28,6 +30,7 @@ class RecipesAPIClient:
         meals = data.get("meals") or []
         return [map_mealdb_meal_to_recipe(m) for m in meals]
 
+    @retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=4, max=15))
     async def _search_by_ingredient(self, ingredient: str) -> list[Recipe]:
         resp = await self._client.get("/filter.php", params={"i": ingredient})
         resp.raise_for_status()

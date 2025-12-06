@@ -1,6 +1,7 @@
 import re
 import httpx
 from async_lru import alru_cache
+from tenacity import retry, stop_after_attempt, wait_exponential
 
 from src.api_handler.constants import NUTRITION_URL
 
@@ -21,6 +22,7 @@ class NutritionAPIClient:
         name = re.sub(r"\s+", " ", name).strip()
         return name
 
+    @retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=4, max=15))
     @alru_cache(maxsize=128)
     async def get_nutrition(self, ingredient_name: str) -> None | dict:
         params = {

@@ -22,3 +22,15 @@ class ClarificationDecision(BaseModel):
         description="yes if you need to ask more questions to the user, no if you have enough information to generate the schema"
     )
     question: str = Field(default="", description="The question to ask the user if ask_more_questions is True")
+
+
+class RecipeSelection(BaseModel):
+    """Schema for recipe selection by critic agent"""
+    selected_recipe_ids: list[str] = Field(
+        ...,
+        description="List of recipe IDs that meet the user's query requirements"
+    )
+    reason: str = Field(
+        ...,
+        description="Short summary of the reason for the selection of the recipe IDs"
+    )

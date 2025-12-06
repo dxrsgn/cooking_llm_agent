@@ -1,8 +1,18 @@
+from functools import partial
 from langgraph.graph import StateGraph, END
+from langgraph.graph.state import CompiledStateGraph
 from .states import AgentState
 from .clarification_agent import build_clarification_graph
 from .recipe_retrieval_agent import build_recipe_retrieval_graph
 
+
+# adapter to prevent leakage to the subgraph state and vice versa
+async def call_subgraph(state: AgentState, subgraph: CompiledStateGraph) -> dict:
+    input_state = {
+        "user_recipe_query": state.user_recipe_query,
+    }
+    result = await subgraph.ainvoke(input_state)
+    return {"recipes": result.get("selected_recipes", [])}
 
 def build_graph(checkpointer=None):
     graph = StateGraph(AgentState)
@@ -11,7 +21,8 @@ def build_graph(checkpointer=None):
     graph.add_node("clarification", clarification_subgraph)
     
     recipe_retrieval_subgraph = build_recipe_retrieval_graph(checkpointer=checkpointer)
-    graph.add_node("recipe_retrieval", recipe_retrieval_subgraph)
+    call_retrieval = partial(call_subgraph, subgraph=recipe_retrieval_subgraph)
+    graph.add_node("recipe_retrieval", call_retrieval)
     
     graph.set_entry_point("clarification")
     graph.add_edge("clarification", "recipe_retrieval")

@@ -1,4 +1,4 @@
-
+import asyncio
 import json
 from typing import TypeVar, Type, Any, Generic
 from pydantic import BaseModel, ValidationError
@@ -98,3 +98,14 @@ class StructuredRetryRunnable(Runnable, Generic[T]):
                 pass
         
         raise ValueError(f"Failed after max retries: {messages}")
+
+
+async def batch_execute(tasks, max_concurrent):
+    results = []
+    for i in range(0, len(tasks), max_concurrent):
+        batch = tasks[i:i + max_concurrent]
+        batch_results = await asyncio.gather(*batch)
+        results.extend(batch_results)
+        if i + max_concurrent < len(tasks):
+            await asyncio.sleep(1)
+    return results
