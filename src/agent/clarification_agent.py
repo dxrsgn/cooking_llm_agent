@@ -4,7 +4,7 @@ from langchain_core.runnables.config import RunnableConfig
 from langgraph.graph import StateGraph, START, END
 from langgraph.types import interrupt, Command
 from .states import AgentState
-from .models import ClarificationDecision, UserRecipeQuery
+from .schemas.structured_output import ClarificationDecision, UserRecipeQuery
 from .prompts import get_clarification_prompt, get_schema_generation_prompt
 from .utils import create_llm, StructuredRetryRunnable
 

@@ -2,7 +2,8 @@ from operator import add
 from typing import Annotated
 from langgraph.graph.message import add_messages
 from pydantic import BaseModel
-from .models import UserProfile, UserRecipeQuery, RecipeSelection
+from .schemas.objects import UserProfile
+from .schemas.structured_output import UserRecipeQuery, ClarificationDecision, RecipeSelection
 from src.api_handler.datamodels import Recipe
 
 

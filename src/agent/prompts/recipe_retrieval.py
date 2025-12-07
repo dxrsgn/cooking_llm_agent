@@ -1,4 +1,4 @@
-from ..models import UserRecipeQuery
+from ..schemas.structured_output import UserRecipeQuery
 
 
 def get_recipe_search_prompt() -> str:

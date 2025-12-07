@@ -9,7 +9,7 @@ from langgraph.graph import StateGraph, START, END
 from langgraph.prebuilt import ToolNode
 from .states import RecipeSearchSubgraphState
 from .utils import create_llm, StructuredRetryRunnable, batch_execute
-from .models import RecipeSelection
+from .schemas.structured_output import RecipeSelection
 from .prompts import get_recipe_search_prompt, format_recipe_query, get_critic_prompt, format_critic_user_message, get_critic_negative_reason_summary
 from src.tools.recipes_tools import search_recipes_by_name, search_recipes_by_ingredient, RecipeSearchResult
 
