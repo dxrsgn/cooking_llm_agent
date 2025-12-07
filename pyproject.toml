@@ -18,6 +18,8 @@ python-dotenv = "^1.0.0"
 arize-phoenix = ">=12.15.0,<13.0.0"
 opentelemetry-instrumentation-httpx = "*"
 openinference-instrumentation-langchain = "*"
+fastapi = "^0.115.0"
+uvicorn = "^0.32.0"
 
 
 [tool.poetry.group.dev.dependencies]
@@ -48,3 +50,4 @@ ignore_missing_imports = true
 [tool.poetry.scripts]
 run_api = "src.api_handler.api_run:main"
 agent_cli = "agent_cli:main"
+backend_server = "backend.server:main"

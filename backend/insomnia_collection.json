@@ -1,0 +1,196 @@
+{
+  "_type": "export",
+  "__export_format": 4,
+  "__export_date": "2024-01-01T00:00:00.000Z",
+  "__export_source": "insomnia.desktop.app:v2023.5.8",
+  "resources": [
+    {
+      "_id": "wrk_collection",
+      "parentId": null,
+      "modified": 1704067200000,
+      "created": 1704067200000,
+      "name": "Cooking LLM Agent API",
+      "description": "Collection for testing the Cooking LLM Agent FastAPI backend",
+      "scope": "collection",
+      "_type": "workspace"
+    },
+    {
+      "_id": "fld_collection",
+      "parentId": "wrk_collection",
+      "modified": 1704067200000,
+      "created": 1704067200000,
+      "name": "Cooking LLM Agent API",
+      "description": "Collection for testing the Cooking LLM Agent FastAPI backend",
+      "environment": {},
+      "environmentPropertyOrder": null,
+      "metaSortKey": -1704067200000,
+      "_type": "request_group"
+    },
+    {
+      "_id": "req_graph_basic",
+      "parentId": "fld_collection",
+      "modified": 1704067200000,
+      "created": 1704067200000,
+      "url": "{{ base_url }}/graph",
+      "name": "POST /graph - Basic Request",
+      "description": "Basic request to call the graph endpoint",
+      "method": "POST",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"thread_id\": \"{{ thread_id }}\",\n  \"message\": \"I want to make something for dinner\"\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json",
+          "id": "pair_content_type"
+        },
+        {
+          "name": "Authorization",
+          "value": "{{ auth_token }}",
+          "id": "pair_authorization"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": -1704067200000,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
+      "_id": "req_graph_followup",
+      "parentId": "fld_collection",
+      "modified": 1704067201000,
+      "created": 1704067201000,
+      "url": "{{ base_url }}/graph",
+      "name": "POST /graph - Follow-up Message",
+      "description": "Follow-up message using the same thread_id to test state persistence",
+      "method": "POST",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"thread_id\": \"{{ thread_id }}\",\n  \"message\": \"Something vegetarian please\"\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json",
+          "id": "pair_content_type"
+        },
+        {
+          "name": "Authorization",
+          "value": "{{ auth_token }}",
+          "id": "pair_authorization"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": -1704067201000,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
+      "_id": "req_graph_no_message",
+      "parentId": "fld_collection",
+      "modified": 1704067202000,
+      "created": 1704067202000,
+      "url": "{{ base_url }}/graph",
+      "name": "POST /graph - Missing Message (Error)",
+      "description": "Test error handling when message is missing",
+      "method": "POST",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"thread_id\": \"{{ thread_id }}\"\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json",
+          "id": "pair_content_type"
+        },
+        {
+          "name": "Authorization",
+          "value": "{{ auth_token }}",
+          "id": "pair_authorization"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": -1704067202000,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
+      "_id": "req_graph_no_auth",
+      "parentId": "fld_collection",
+      "modified": 1704067203000,
+      "created": 1704067203000,
+      "url": "{{ base_url }}/graph",
+      "name": "POST /graph - Missing Auth (Error)",
+      "description": "Test error handling when Authorization header is missing",
+      "method": "POST",
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"thread_id\": \"{{ thread_id }}\",\n  \"message\": \"test message\"\n}"
+      },
+      "parameters": [],
+      "headers": [
+        {
+          "name": "Content-Type",
+          "value": "application/json",
+          "id": "pair_content_type"
+        }
+      ],
+      "authentication": {},
+      "metaSortKey": -1704067203000,
+      "isPrivate": false,
+      "settingStoreCookies": true,
+      "settingSendCookies": true,
+      "settingDisableRenderRequestBody": false,
+      "settingEncodeUrl": true,
+      "settingRebuildPath": true,
+      "settingFollowRedirects": "global",
+      "_type": "request"
+    },
+    {
+      "_id": "env_base",
+      "parentId": "wrk_collection",
+      "modified": 1704067200000,
+      "created": 1704067200000,
+      "name": "Base Environment",
+      "data": {
+        "base_url": "http://localhost:8000",
+        "auth_token": "test-token-123",
+        "thread_id": "test-thread-123"
+      },
+      "dataPropertyOrder": {
+        "&": [
+          "base_url",
+          "auth_token",
+          "thread_id"
+        ]
+      },
+      "color": null,
+      "isPrivate": false,
+      "metaSortKey": 1704067200000,
+      "_type": "environment"
+    }
+  ]
+}
