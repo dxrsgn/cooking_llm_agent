@@ -1,10 +1,12 @@
 import os
+from contextlib import asynccontextmanager
 import uvicorn
 from fastapi import FastAPI, Header, HTTPException
 from pydantic import BaseModel
 from dotenv import load_dotenv
 from langchain_core.messages import HumanMessage
-from langgraph.checkpoint.memory import MemorySaver
+from langgraph.checkpoint.postgres.aio import AsyncPostgresSaver
+from psycopg_pool import AsyncConnectionPool
 from langgraph.types import Command
 from src.agent.graph import build_graph
 from src.agent.models import UserProfile
@@ -25,10 +27,25 @@ LangChainInstrumentor().instrument(tracer_provider=tracer_provider)
 HTTPXClientInstrumentor().instrument()
 tracer = tracer_provider.get_tracer("aboba")
 
-app = FastAPI()
+pool: AsyncConnectionPool | None = None
+checkpointer: AsyncPostgresSaver | None = None
+graph = None
 
-checkpointer = MemorySaver()
-graph = build_graph(checkpointer=checkpointer)
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    global pool, checkpointer, graph
+    db_uri = os.getenv("POSTGRES_URI", "postgresql://postgres:postgres@localhost:5432/langgraph")
+    pool = AsyncConnectionPool(conninfo=db_uri, kwargs={"autocommit": True})
+    await pool.open()
+    checkpointer = AsyncPostgresSaver(pool)
+    await checkpointer.setup()
+    graph = build_graph(checkpointer=checkpointer)
+    yield
+    await pool.close()
+
+
+app = FastAPI(lifespan=lifespan)
 
 recipes_client = RecipesAPIClient()
 
@@ -48,6 +65,8 @@ async def call_graph(
     request: GraphRequest,
     authorization: str = Header(..., alias="Authorization")
 ):
+    if checkpointer is None or graph is None:
+        raise HTTPException(status_code=503, detail="Service is not ready")
     try:
         config = {
             "configurable": {
@@ -109,6 +128,8 @@ async def call_graph(
 @app.on_event("shutdown")
 async def shutdown_event():
     await recipes_client.close()
+    if pool:
+        await pool.close()
 
 
 def main():
