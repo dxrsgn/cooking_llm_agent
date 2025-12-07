@@ -74,9 +74,9 @@ async def test_clarification():
             print(f"Preferences: {result['user_recipe_query'].preferences}")
             print(f"Restrictions: {result['user_recipe_query'].restrictions}")
             
-            if result.get("recipes"):
-                print(f"\n=== Retrieved Recipes ({len(result['recipes'])}) ===")
-                for i, recipe in enumerate(result['recipes'][:5], 1):
+            if result.get("selected_recipes"):
+                print(f"\n=== Retrieved Recipes ({len(result['selected_recipes'])}) ===")
+                for i, recipe in enumerate(result['selected_recipes'][:5], 1):
                     print(f"\n{i}. {recipe.title}")
                     print(f"   ID: {recipe.id}")
                     if recipe.ingredients:

@@ -12,7 +12,7 @@ async def call_subgraph(state: AgentState, subgraph: CompiledStateGraph) -> dict
         "user_recipe_query": state.user_recipe_query,
     }
     result = await subgraph.ainvoke(input_state)
-    return {"recipes": result.get("selected_recipes", [])}
+    return {"selected_recipes": result.get("selected_recipes", [])}
 
 def build_graph(checkpointer=None):
     graph = StateGraph(AgentState)

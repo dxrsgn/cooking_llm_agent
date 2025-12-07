@@ -3,24 +3,12 @@ from ..models import UserRecipeQuery
 
 def get_recipe_search_prompt() -> str:
     return """<Task>
-You are a recipe search assistant specialized in finding recipes using the available search tools.
-Your goal is to find the most relevant recipes matching the user's intent. Be thorough but efficient in your tool usage.
-If the user query is vague or doesn't explicitly mention ingredients or dish names, you must infer reasonable ingredients or dish names based on the context and intent of the query.
+You are a recipe search assistant specialized in finding recipes using the available search tools.  
+Your goal is to find the most relevant recipes matching the user's intent. Be thorough but efficient in your tool usage.  
+If the user query is vague or doesn't explicitly mention ingredients or dish names, you must infer reasonable ingredients or dish names based on the context and intent of the query.  
+After calling the tools for searching recipes, you will recieve the feedback from the critic agent on the recipes. You must use this feedback to refine your search.  
 </Task>
 
-<Available Tools>
-1. search_recipes_by_name: Search for recipes by exact name or title
-   - Parameter: query (string) - The exact recipe name or title to search for
-   - Use when: User provides a specific recipe name, title, or dish name
-   - Best for: Finding a known recipe by its name
-
-2. search_recipes_by_ingredient: Search for recipes based on ingredients
-   - Parameters:
-     * ingredient_include (required, list of 1-10 strings): Ingredients that must be present in recipes
-     * ingredient_exclude (optional, list of strings): Ingredients to exclude from results
-   - Use when: User provides ingredients they want to use or avoid
-   - Best for: Finding recipes based on available ingredients or dietary restrictions
-</Available Tools>
 
 <Decision Guidelines>
 - Respect user's dietary restrictions and preferences. E.g. if user is vegetarian, avoid recipes that contain meat.   
@@ -94,15 +82,16 @@ Select the recipe IDs that best match the user's requirements."""
 def get_critic_negative_reason_summary(reasons: list[str]) -> str:
     reasons_text = "\n".join([f"- {reason}" for reason in reasons])
     return f"""<Task>  
-You are analyzing recipe evaluation reasonings to identify negative (rejecting) reasons and summarize them briefly.
-Your goal is to extract only the negative reasons that explain why recipes were rejected, and provide a concise summary.
+You are analyzing recipe evaluation reasonings to identify negative (rejecting) reasons and summarize them briefly.  
+Your goal is to extract only the negative reasons that explain why recipes were rejected, and provide a concise summary.  
+Format your response as if you were criticizing the recipes to the user.  
 </Task>  
 
 <All Reasonings>  
 {reasons_text}  
 </All Reasonings>  
 
-<Instructions>
+<Instructions>  
 - Review all the reasonings provided above  
 - Identify which reasonings are negative (i.e., explain why recipes were rejected or did not meet requirements)  
 - Ignore any positive reasonings or neutral observations  
@@ -110,6 +99,7 @@ Your goal is to extract only the negative reasons that explain why recipes were 
 - Summarize them very briefly in 1-3 sentences, focusing on the main rejection criteria  
 - Be concise and specific  
 - If the reasonings are empty, return suggestion to try different queries, since data is empty.  
+- If there are no negative reasons, return message approving the recipes.  
 </Instructions>  
 
-Provide a brief summary of the negative reasons:"""
+Provide a brief summary of the negative reasons or a message approving the recipes:"""

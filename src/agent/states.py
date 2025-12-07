@@ -10,7 +10,7 @@ class AgentState(BaseModel):
     messages: Annotated[list, add_messages]
     user_profile: UserProfile = UserProfile()
     user_recipe_query: UserRecipeQuery | None = None
-    recipes: list[Recipe] = []
+    selected_recipes: list[Recipe] = []
 
 class RecipeSearchSubgraphState(BaseModel):
     iterations: int = 0

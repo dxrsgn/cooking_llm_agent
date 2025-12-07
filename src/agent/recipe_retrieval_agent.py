@@ -1,5 +1,6 @@
 from typing import Optional
 import json
+import re
 from langgraph.types import Command
 from pydantic import ValidationError
 from langchain_core.messages import HumanMessage, SystemMessage, ToolMessage
@@ -16,6 +17,7 @@ from src.tools.recipes_tools import search_recipes_by_name, search_recipes_by_in
 async def recipe_search_agent_node(state: RecipeSearchSubgraphState, config: Optional[RunnableConfig] = None) -> Command:
     last_message = state.messages[-1] if state.messages else None
 
+    # got recipies, going to critizize them
     if isinstance(last_message, ToolMessage):
         return Command(goto="critic_agent")
     
@@ -37,17 +39,19 @@ async def recipe_search_agent_node(state: RecipeSearchSubgraphState, config: Opt
     
     system_prompt = get_recipe_search_prompt()
     
-    messages = state.messages + [
-        SystemMessage(content=system_prompt),
-        HumanMessage(content=query_text)
-    ]
+    messages = state.messages
+    if len(messages) == 0:
+        messages = [
+            SystemMessage(content=system_prompt),
+            HumanMessage(content=query_text)
+        ]
     
     response = await llm_with_tools.ainvoke(messages, config=config)
     
     return Command(
         goto="tools",
         update={
-            "messages": [response],
+            "messages": messages + [response],
             "iterations": state.iterations + 1,
         }
     )
@@ -80,6 +84,10 @@ async def tool_post_process(state: RecipeSearchSubgraphState, config: Optional[R
     seen_ids = set()
     unique_recipes = []
     for recipe in recipes:
+        # sometimes model outputs bad formated ids
+        match = re.search(r'(\d+)$', recipe.id)
+        normalized_id = match.group(1) if match else recipe.id
+        recipe.id = normalized_id
         if recipe.id not in seen_ids:
             seen_ids.add(recipe.id)
             unique_recipes.append(recipe)
