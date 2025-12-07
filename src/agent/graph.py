@@ -4,6 +4,7 @@ from langgraph.graph.state import CompiledStateGraph
 from .states import AgentState
 from .clarification_agent import build_clarification_graph
 from .recipe_retrieval_agent import build_recipe_retrieval_graph
+from .report_generation import build_report_generation_graph
 
 
 # adapter to prevent leakage to the subgraph state and vice versa
@@ -24,8 +25,12 @@ def build_graph(checkpointer=None):
     call_retrieval = partial(call_subgraph, subgraph=recipe_retrieval_subgraph)
     graph.add_node("recipe_retrieval", call_retrieval)
     
+    report_generation_subgraph = build_report_generation_graph(checkpointer=checkpointer)
+    graph.add_node("report_generation", report_generation_subgraph)
+    
     graph.set_entry_point("clarification")
     graph.add_edge("clarification", "recipe_retrieval")
-    graph.add_edge("recipe_retrieval", END)
+    graph.add_edge("recipe_retrieval", "report_generation")
+    graph.add_edge("report_generation", END)
     
     return graph.compile(checkpointer=checkpointer)

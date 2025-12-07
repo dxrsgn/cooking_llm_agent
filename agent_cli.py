@@ -84,8 +84,13 @@ async def test_clarification():
                         print(f"   Ingredients: {', '.join(ingredient_names)}...")
             else:
                 print("\nNo recipes retrieved")
+
         else:
             print("\nClarification completed but no final query generated")
+
+        if result.get("messages"):
+            print("\n=== Report ===")
+            print(result["messages"][-1].content)
     finally:
         await recipes_client.close()
 
