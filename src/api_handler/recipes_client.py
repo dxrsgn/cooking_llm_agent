@@ -1,7 +1,8 @@
 import httpx
 from src.api_handler.datamodels import Recipe, RecipeSearchQuery
 import asyncio
-from src.api_handler.constants import RECIPES_URL, MAX_RECIPES
+from async_lru import alru_cache
+from src.api_handler.constants import RECIPES_URL, MAX_RECIPES, BATCH_SIZE
 from tenacity import retry, stop_after_attempt, wait_exponential
 from src.api_handler.recipes_funcs import (map_mealdb_meal_to_recipe, 
                                            recipe_has_anchor, 
@@ -12,6 +13,7 @@ from src.api_handler.recipes_funcs import (map_mealdb_meal_to_recipe,
 class RecipesAPIClient:
     base_url = RECIPES_URL
     max_recipes = MAX_RECIPES
+    batch_size = BATCH_SIZE
 
     def __init__(self):
         self._client = httpx.AsyncClient(
@@ -22,7 +24,8 @@ class RecipesAPIClient:
     async def close(self):
         await self._client.aclose()
 
-    @retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=4, max=15))
+    @alru_cache(maxsize=128)
+    @retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=8, max=15))
     async def _search_by_name(self, query: str) -> list[Recipe]:
         resp = await self._client.get("/search.php", params={"s": query})
         resp.raise_for_status()
@@ -30,7 +33,8 @@ class RecipesAPIClient:
         meals = data.get("meals") or []
         return [map_mealdb_meal_to_recipe(m) for m in meals]
 
-    @retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=4, max=15))
+    @alru_cache(maxsize=128)
+    @retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=8, max=15))
     async def _search_by_ingredient(self, ingredient: str) -> list[Recipe]:
         resp = await self._client.get("/filter.php", params={"i": ingredient})
         resp.raise_for_status()
@@ -58,13 +62,13 @@ class RecipesAPIClient:
             candidates.extend(await self._search_by_name(query.query_text))
 
         if query.include_ingredients:
-            tasks = [
-                self._search_by_ingredient(i)
-                for i in query.include_ingredients
-            ]
-            results = await asyncio.gather(*tasks)
-            for part in results:
-                candidates.extend(part)
+            batch_size = self.batch_size
+            for i in range(0, len(query.include_ingredients), batch_size):
+                batch = query.include_ingredients[i:i + batch_size]
+                tasks = [self._search_by_ingredient(ing) for ing in batch]
+                results = await asyncio.gather(*tasks)
+                for part in results:
+                    candidates.extend(part)
 
         unique: dict[str, Recipe] = {}
         for r in candidates:
