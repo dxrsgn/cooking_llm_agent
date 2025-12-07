@@ -9,8 +9,9 @@ from langgraph.checkpoint.postgres.aio import AsyncPostgresSaver
 from psycopg_pool import AsyncConnectionPool
 from langgraph.types import Command
 from src.agent.graph import build_graph
-from src.agent.models import UserProfile
+from src.agent.schemas.objects import UserProfile
 from src.agent.states import AgentState
+from src.database.crud import init_db, get_session, get_user_by_login, get_profile_by_user_id, update_profile
 from src.api_handler.recipes_client import RecipesAPIClient
 from phoenix.otel import register
 from opentelemetry.instrumentation.httpx import HTTPXClientInstrumentor
@@ -49,6 +50,7 @@ app = FastAPI(lifespan=lifespan)
 
 recipes_client = RecipesAPIClient()
 
+init_db()
 
 class GraphRequest(BaseModel):
     thread_id: str
@@ -60,11 +62,39 @@ class GraphResponse(BaseModel):
     thread_id: str
 
 
+class LoginRequest(BaseModel):
+    username: str
+    password: str
+
+
+class LoginResponse(BaseModel):
+    success: bool
+    message: str
+
+
+@app.post("/login", response_model=LoginResponse)
+def login(request: LoginRequest):
+    with get_session() as session:
+        user = get_user_by_login(session, request.username)
+        if user and user.password == request.password:
+            return LoginResponse(success=True, message="Login successful")
+        return LoginResponse(success=False, message="Invalid username or password")
+
+
 @app.post("/graph", response_model=GraphResponse)
 async def call_graph(
     request: GraphRequest,
     authorization: str = Header(..., alias="Authorization")
 ):
+    user_profile = None
+    user_id = None
+    if authorization:
+        with get_session() as session:
+            user = get_user_by_login(session, authorization)
+            if user:
+                user_id = user.id
+                user_profile = get_profile_by_user_id(session, user_id)
+
     if checkpointer is None or graph is None:
         raise HTTPException(status_code=503, detail="Service is not ready")
     try:
@@ -82,6 +112,14 @@ async def call_graph(
         if not request.message:
             raise HTTPException(status_code=400, detail="Message is required")
 
+        agent_profile = UserProfile()
+        if user_profile:
+            agent_profile = UserProfile(
+                last_queries=list(user_profile.last_queries or []),
+                preferences=list(user_profile.preferences or []),
+                allergies=list(user_profile.allergies or [])
+            )
+
         try:
             state_snapshot = await checkpointer.aget(config)  # type: ignore
             if state_snapshot and state_snapshot.values and state_snapshot.values.get("__interrupt__"):  # type: ignore
@@ -89,13 +127,16 @@ async def call_graph(
             else:
                 state = AgentState(
                     messages=[HumanMessage(content=request.message)],
-                    user_profile=UserProfile()
+                    user_profile=agent_profile
                 )
                 result = await graph.ainvoke(state, config=config)  # type: ignore
+                if user_id is not None:
+                    with get_session() as session:
+                        update_profile(session, user_id, last_queries=state.user_profile.last_queries)
         except Exception:
             state = AgentState(
                 messages=[HumanMessage(content=request.message)],
-                user_profile=UserProfile()
+                user_profile=agent_profile
             )
             result = await graph.ainvoke(state, config=config)  # type: ignore
 
