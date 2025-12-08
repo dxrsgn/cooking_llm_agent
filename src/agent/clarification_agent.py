@@ -5,6 +5,7 @@ from langgraph.graph import StateGraph, START, END
 from langgraph.types import interrupt, Command
 from .states import AgentState
 from .schemas.structured_output import ClarificationDecision, UserRecipeQuery
+from .schemas.objects import UserProfile
 from .prompts import get_clarification_prompt, get_schema_generation_prompt
 from .utils import create_llm, StructuredRetryRunnable
 
@@ -96,8 +97,13 @@ async def schema_generation_node(state: AgentState, config: Optional[RunnableCon
     ]
     
     final_query = await retry_runnable.ainvoke(messages)
-    
-    return {"user_recipe_query": final_query}
+    new_profile = UserProfile(
+        last_queries=state.user_profile.last_queries + [final_query.query],
+        preferences=state.user_profile.preferences,
+        allergies=state.user_profile.allergies
+    )
+
+    return {"user_recipe_query": final_query, "user_profile": new_profile}
 
 
 def build_clarification_graph(checkpointer=None):

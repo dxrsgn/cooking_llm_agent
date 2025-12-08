@@ -132,7 +132,7 @@ async def call_graph(
                 result = await graph.ainvoke(state, config=config)  # type: ignore
                 if user_id is not None:
                     with get_session() as session:
-                        update_profile(session, user_id, last_queries=state.user_profile.last_queries)
+                        update_profile(session, user_id, last_queries=result["user_profile"].last_queries)
         except Exception:
             state = AgentState(
                 messages=[HumanMessage(content=request.message)],
