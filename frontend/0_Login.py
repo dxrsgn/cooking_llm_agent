@@ -1,7 +1,7 @@
 import streamlit as st
 import asyncio
-from utils.session import init_state
-from utils.async_runner import run_async
+from session import init_state
+from async_runner import run_async
 
 # Initialize session state keys
 init_state()
