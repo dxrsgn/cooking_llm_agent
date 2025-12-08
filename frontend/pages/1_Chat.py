@@ -35,25 +35,23 @@ thread_id = st.session_state["thread_id"]
 
 
 # ========== Mock API HTTP Call (Async) ==========
-async def send_to_mock_api(message: str):
+async def send_to_backend(message: str):
     payload = {
-        "message": message,
         "thread_id": thread_id,
+        "message": message
     }
 
-    headers = {
-        "Authorization": username
-    }
+    headers = {"Authorization": username}
 
     async with httpx.AsyncClient() as client:
         resp = await client.post(
-            "http://localhost:9000/chat",   # mock API endpoint
+            "http://backend:8000/graph",
             json=payload,
             headers=headers,
-            timeout=15.0
+            timeout=300.0,
         )
         resp.raise_for_status()
-        return resp.json()   # expected: {"message": str, "thread_id": str}
+        return resp.json()
 
 
 # ========== Page Layout ==========
@@ -74,7 +72,7 @@ with col_right:
 
     st.markdown(" ")
     st.markdown("**Status**")
-    st.markdown("- Backend: POST /chat (mock API)")
+    st.markdown("- Backend: POST http://backend:8000/chat")
     st.markdown(f"- User: **{username}**")
     st.markdown(f"- Thread ID: `{thread_id}`")
 
@@ -120,7 +118,7 @@ if user_input:
 
     # Call mock API asynchronously
     async def _call_api():
-        return await send_to_mock_api(user_input)
+        return await send_to_backend(user_input)
 
     response_json = run_async(_call_api())
     assistant_reply = response_json["message"]
