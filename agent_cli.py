@@ -5,9 +5,10 @@ from langchain_core.messages import HumanMessage
 from langgraph.checkpoint.memory import MemorySaver
 from langgraph.types import Command
 from src.agent.graph import build_graph
-from src.agent.models import UserProfile
+from src.agent.schemas.objects import UserProfile
 from src.agent.states import AgentState
 from src.api_handler.recipes_client import RecipesAPIClient
+from src.api_handler.nutrition_client import NutritionAPIClient
 
 from phoenix.otel import register
 from opentelemetry.instrumentation.httpx import HTTPXClientInstrumentor
@@ -27,8 +28,8 @@ load_dotenv()
 
 async def test_clarification():
     user_profile = UserProfile(
-        preferences=["vegetarian", "low-carb"],
-        allergies=["peanuts", "shellfish"]
+        preferences=["chicken"],
+        allergies=["garlic"]
     )
     
     state = AgentState(
@@ -40,6 +41,7 @@ async def test_clarification():
     graph = build_graph(checkpointer=checkpointer)
     
     recipes_client = RecipesAPIClient()
+    nutrition_client = NutritionAPIClient()
     
     try:
         config = {
@@ -49,7 +51,8 @@ async def test_clarification():
                 "llm_api_key": os.getenv("LLM_API_KEY"),
                 "llm_api_url": os.getenv("LLM_API_URL"),
                 "reasoning": os.getenv("LLM_REASONING", "false").lower() == "true",
-                "recipes_client": recipes_client
+                "recipes_client": recipes_client,
+                "nutrition_client": nutrition_client,
             }
         }
         
@@ -93,6 +96,7 @@ async def test_clarification():
             print(result["messages"][-1].content)
     finally:
         await recipes_client.close()
+        await nutrition_client.close()
 
 
 def main():
