@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, RootModel
 
 
 class IngredientRequirement(BaseModel):
@@ -12,6 +12,7 @@ class Recipe(BaseModel):
     title: str
     ingredients: list[IngredientRequirement]
     instructions: None | str = None
+    total_calories: None | float = None
 
 
 class RecipeSearchQuery(BaseModel):
@@ -21,3 +22,12 @@ class RecipeSearchQuery(BaseModel):
 
     def is_valid(self) -> bool:
         return bool(self.query_text or self.include_ingredients)
+
+
+class RecipeCalories(BaseModel):
+    id: str
+    total_calories: int
+
+
+class CaloriesResponse(RootModel):
+    root: list[RecipeCalories]

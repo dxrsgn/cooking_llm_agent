@@ -12,6 +12,10 @@ from .utils import create_llm, StructuredRetryRunnable, batch_execute
 from .schemas.structured_output import RecipeSelection
 from .prompts import get_recipe_search_prompt, format_recipe_query, get_critic_prompt, format_critic_user_message, get_critic_negative_reason_summary
 from src.tools.recipes_tools import search_recipes_by_name, search_recipes_by_ingredient, RecipeSearchResult
+from src.api_handler.nutrition_client import NutritionAPIClient
+from src.api_handler.nutrition_funcs import enrich_recipes_with_nutrition
+from typing import Optional
+from src.api_handler.datamodels import CaloriesResponse
 
 
 async def recipe_search_agent_node(state: RecipeSearchSubgraphState, config: Optional[RunnableConfig] = None) -> Command:
@@ -163,17 +167,95 @@ async def critic_agent_node(state: RecipeSearchSubgraphState, config: Optional[R
         "messages": HumanMessage(content=reason_summary.content),
     }
 
+
+async def enrich_and_estimate_calories_node(state: RecipeSearchSubgraphState, config: Optional[RunnableConfig] = None) -> dict:
+    recipes = getattr(state, "current_recipes", [])
+    if not recipes:
+        return {"messages": [HumanMessage(content="No recipes found to enrich")]}
+
+    configurable = config.get("configurable", {}) if config else {}
+
+    nutrition_client = NutritionAPIClient()
+    enriched_recipes = await enrich_recipes_with_nutrition(recipes, nutrition_client)
+    await nutrition_client.close()
+
+    llm = create_llm(
+        reasoning=configurable.get("reasoning", True),
+        model=configurable.get("model_name"),
+        temperature=0,
+        api_key=configurable.get("llm_api_key"),
+        base_url=configurable.get("llm_api_url"),
+        max_tokens=4096,
+    ).with_structured_output(CaloriesResponse)
+
+    prompt_parts = []
+    for recipe in enriched_recipes:
+        ingredients_info = []
+        for ing in recipe.ingredients:
+            amount = ing.amount or "unknown amount"
+            cals = ing.calories_per100g if ing.calories_per100g is not None else "unknown calories"
+            ingredients_info.append(f"- {ing.name}, amount: {amount}, calories per 100g: {cals}")
+        prompt_parts.append(f"Recipe ID: {recipe.id}\nTitle: {recipe.title}\n" + "\n".join(ingredients_info))
+
+    prompt_text = (
+        "You are a nutrition expert. Based on the ingredient data with their amounts and calories per 100 grams, "
+        "roughly estimate the total calories in the dish. If data is missing, make an approximate estimate considering the weight/count of each ingredient.\n\n"
+        + "\n\n".join(prompt_parts)
+        + "\n\nReturn JSON in the format [{\"id\": \"<id>\", \"total_calories\": number}, ...]"
+    )
+
+    system_prompt = """
+    You are an assistant who responds **only** with a JSON array of objects:
+
+    [
+    {
+        "id": "recipe_name",
+        "total_calories": total_calories_in_the_recipe
+    }
+    ]
+
+    Do not add any extra text.
+    """
+
+    messages = [
+        SystemMessage(content=system_prompt),
+        HumanMessage(content=prompt_text)
+    ]
+
+    response = await llm.ainvoke(messages)
+    calorie_estimates = response.root
+
+    id_to_calories = {item.id: item.total_calories for item in calorie_estimates}
+
+    updated_recipes = []
+    for recipe in enriched_recipes:
+        total_cals = id_to_calories.get(recipe.id)
+        updated_recipe = recipe.copy(update={"total_calories": total_cals})
+        updated_recipes.append(updated_recipe)
+
+    return {
+        "current_recipes": updated_recipes,
+        "messages": [HumanMessage(content="Calories estimation complete")]
+    }
+
+
 def build_recipe_retrieval_graph(checkpointer=None):
     tools = [search_recipes_by_name, search_recipes_by_ingredient]
     tool_node = ToolNode(tools)
     
     graph = StateGraph(RecipeSearchSubgraphState)
+    
     graph.add_node("recipe_search_agent", recipe_search_agent_node)
     graph.add_node("tools", tool_node)
     graph.add_node("tool_post_process", tool_post_process)
+    graph.add_node("enrich_calories", enrich_and_estimate_calories_node)
     graph.add_node("critic_agent", critic_agent_node)
     
     graph.add_edge(START, "recipe_search_agent")
+    graph.add_edge("recipe_search_agent", "tools")
+    graph.add_edge("tools", "tool_post_process")
+    graph.add_edge("tool_post_process", "enrich_calories") 
+    graph.add_edge("enrich_calories", "critic_agent")
     
     def route_after_critic(state: RecipeSearchSubgraphState):
         if state.iterations < 2:
@@ -182,7 +264,5 @@ def build_recipe_retrieval_graph(checkpointer=None):
             return END
     
     graph.add_conditional_edges("critic_agent", route_after_critic)
-    graph.add_edge("tools", "tool_post_process")
-    graph.add_edge("tool_post_process", "recipe_search_agent")
     
     return graph.compile(checkpointer=checkpointer)

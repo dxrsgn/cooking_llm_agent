@@ -30,7 +30,7 @@ class NutritionAPIClient:
             "search_simple": 1,
             "action": "process",
             "json": 1,
-            "page_size": 5,
+            "page_size": 1,
         }
         try:
             resp = await self._client.get(self.base_url, params=params)
@@ -47,6 +47,7 @@ class NutritionAPIClient:
                         "brands": product.get("brands"),
                         "url": product.get("url"),
                     }
-        except Exception:
+        except Exception as e:
+            print(e)
             pass
         return None
