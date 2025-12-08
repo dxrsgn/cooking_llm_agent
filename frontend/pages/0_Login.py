@@ -1,72 +1,67 @@
 import streamlit as st
 import asyncio
-from utils.session import init_state
-from utils.async_runner import run_async
+import httpx
 
-# Initialize session state keys
-init_state()
+from utils.session import init_state
+
+
+BACKEND_URL = "http://backend:8000"   # Docker 内访问 backend
+# 如果你本地运行，不走 docker，则用：
+# BACKEND_URL = "http://localhost:8000"
+
 
 st.set_page_config(page_title="Login", layout="centered")
+init_state()
 
-st.title("Login to Pantry Assistant")
+st.title("🔐 Login to Pantry Assistant")
 
-
-# -----------------------------------------
-# If already authenticated → redirect tip
-# -----------------------------------------
+# Already logged in
 if st.session_state.get("authenticated", False):
-    st.success("You are already logged in.")
-    st.page_link("pages/1_Chat.py", label="Go to Chat →")
+    st.success(f"You are already logged in as **{st.session_state['username']}**.")
+    st.page_link("pages/1_Chat.py", label="➡ Go to Chat")
     st.stop()
 
 
-# -----------------------------------------
-# Sidebar navigation (only show Login)
-# -----------------------------------------
-st.sidebar.page_link("pages/0_Login.py", label="Login")
-
-
-# -----------------------------------------
-# Mock async authentication function
-#
-# Replace this later with async DB lookup:
-#   async def verify_user_db(username, password):
-#       ...
-# -----------------------------------------
+# -------------------------
+# Async login via backend
+# -------------------------
 async def verify_user(username: str, password: str) -> bool:
-    await asyncio.sleep(0.2)  # simulate async call
-    # Simple mock login (replace with DB logic later)
-    return username == "admin" and password == "1234"
+    """Call backend /login API."""
+    payload = {"username": username, "password": password}
 
-"""
-# Example for future real DB usage:
-
-async def verify_user(username: str, password: str) -> bool:
-    async for session in get_session():
-        result = await session.execute(
-            select(User).where(User.username == username)
-        )
-        user = result.scalars().first()
-        if not user:
+    async with httpx.AsyncClient() as client:
+        resp = await client.post(f"{BACKEND_URL}/login", json=payload)
+        if resp.status_code != 200:
             return False
-        return user.password_hash == hash(password)
-"""
+
+        data = resp.json()
+        return data.get("success", False)
 
 
-# -----------------------------------------
+# -------------------------
 # Login Form
-# -----------------------------------------
+# -------------------------
 username = st.text_input("Username")
 password = st.text_input("Password", type="password")
 
 if st.button("Login"):
-    is_valid = run_async(verify_user(username, password))
+    if not username or not password:
+        st.error("Please enter both username and password.")
+        st.stop()
+
+    is_valid = asyncio.run(verify_user(username, password))
 
     if is_valid:
         st.session_state["authenticated"] = True
-        st.session_state["username"] = username   # ⭐ required for Authorization header
-        st.success("Login successful!")
-        st.page_link("pages/1_Chat.py", label="Go to Chat →")
+        st.session_state["username"] = username
+
+        st.success(" Login successful!")
+        st.page_link("pages/1_Chat.py", label="➡ Go to Chat")
         st.stop()
+
     else:
         st.error("Invalid username or password.")
+
+
+# Sidebar
+st.sidebar.page_link("pages/0_Login.py", label="Login")
