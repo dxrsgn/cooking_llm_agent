@@ -3,11 +3,11 @@ import uuid
 import httpx
 import streamlit as st
 
-from chat_bubbles import render_user_msg, render_assistant_msg
-from loaders import show_thinking, clear_thinking
-from layout import render_header, render_footer
-from async_runner import run_async
-from session import (
+from components.chat_bubbles import render_user_msg, render_assistant_msg
+from components.loaders import show_thinking, clear_thinking
+from components.layout import render_header, render_footer
+from utils.async_runner import run_async
+from utils.session import (
     init_state,
     get_chat_history,
     add_chat_message,
