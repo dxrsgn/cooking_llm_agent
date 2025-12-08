@@ -1,7 +1,7 @@
 import streamlit as st
 
-from layout import render_header, render_footer
-from session import init_state, get_logs, clear_logs
+from components.layout import render_header, render_footer
+from utils.session import init_state, get_logs, clear_logs
 
 if not st.session_state.get("authenticated", False):
     st.error("You must log in first.")
