@@ -3,11 +3,11 @@ import uuid
 import httpx
 import streamlit as st
 
-from components.chat_bubbles import render_user_msg, render_assistant_msg
-from components.loaders import show_thinking, clear_thinking
-from components.layout import render_header, render_footer
-from utils.async_runner import run_async
-from utils.session import (
+from chat_bubbles import render_user_msg, render_assistant_msg
+from loaders import show_thinking, clear_thinking
+from layout import render_header, render_footer
+from async_runner import run_async
+from session import (
     init_state,
     get_chat_history,
     add_chat_message,
@@ -35,7 +35,7 @@ thread_id = st.session_state["thread_id"]
 
 
 # ========== Mock API HTTP Call (Async) ==========
-async def send_to_mock_api(message: str):
+async def send_to_backend(message: str):
     payload = {
         "message": message,
         "thread_id": thread_id,
@@ -47,7 +47,7 @@ async def send_to_mock_api(message: str):
 
     async with httpx.AsyncClient() as client:
         resp = await client.post(
-            "http://localhost:9000/chat",   # mock API endpoint
+            "http://backend:8000/chat",   # mock API endpoint
             json=payload,
             headers=headers,
             timeout=15.0
@@ -120,7 +120,7 @@ if user_input:
 
     # Call mock API asynchronously
     async def _call_api():
-        return await send_to_mock_api(user_input)
+        return await send_to_backend(user_input)
 
     response_json = run_async(_call_api())
     assistant_reply = response_json["message"]
