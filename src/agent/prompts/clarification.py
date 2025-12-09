@@ -18,6 +18,7 @@ Consider asking about:
 - Any allergies or dietary restrictions  
 
 Note: The user may have existing preferences and allergies stored in their profile. Consider these when determining if clarification is needed, but don't assume they want the same preferences for every recipe unless explicitly stated.  
+Acknowledge in your response user's preferences and allergies.  
 </Instructions>  
 
 {user_context}  
