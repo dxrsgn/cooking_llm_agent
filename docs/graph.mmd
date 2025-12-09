@@ -1,0 +1,28 @@
+graph TD
+    __start__([Start]) --> clarification
+    clarification --> recipe_retrieval
+    recipe_retrieval --> report_generation
+    report_generation --> __end__([End])
+
+    subgraph clarification[Clarification]
+        c_start([Start]) --> clarify
+        clarify -->|continue| asking_question
+        clarify -->|done| generate_schema
+        asking_question -->|user response| clarify
+        generate_schema --> c_end([End])
+    end
+
+    subgraph recipe_retrieval[Recipe Retrieval]
+        r_start([Start]) --> recipe_search_agent
+        recipe_search_agent --> tools
+        tools --> tool_post_process
+        tool_post_process --> enrich_calories
+        enrich_calories --> critic_agent
+        critic_agent -->|iterations >= 3 OR recipes >= 5| r_end([End])
+        critic_agent -->|need more recipes| recipe_search_agent
+    end
+
+    subgraph report_generation[Report Generation]
+        rg_start([Start]) --> report_gen_node[Report Generation]
+        report_gen_node --> rg_end([End])
+    end

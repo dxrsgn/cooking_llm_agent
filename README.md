@@ -17,12 +17,7 @@ A multi-agent system that helps you discover recipes based on your preferences, 
 
 The system uses LangGraph to orchestrate four specialized subgraphs:
 
-```
-            ↺ (human loop)
-User Query → Clarification → Schema Generation → Recipe Retrieval ⇄ Critic → Report Generation → Response
-                                                        ↑____________↓
-                                                         (ReAct loop)
-```
+![Agent Graph](docs/graph.drawio.png)
 
 The Recipe Retrieval and Critic agents form a **ReAct-style loop**: the retrieval agent searches for recipes, the critic evaluates them against user requirements and provides feedback. If results are insufficient, the loop continues with refined searches (up to 3 iterations).
 
@@ -35,6 +30,8 @@ The Recipe Retrieval and Critic agents form a **ReAct-style loop**: the retrieva
 | **Report Generation** | Formats selected recipes with ingredients, calories, and instructions |
 
 ## Tech Stack
+
+![Architecture](docs/architecture.drawio.png)
 
 - **LLM Framework:** LangChain + LangGraph
 - **Backend:** FastAPI + Uvicorn

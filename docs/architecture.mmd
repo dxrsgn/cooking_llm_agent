@@ -1,0 +1,47 @@
+graph TB
+    subgraph Users
+        user((User))
+    end
+
+    subgraph External APIs
+        llm[LLM API<br/>OpenAI/Compatible]
+        mealdb[TheMealDB API<br/>Recipes]
+        nutritionix[Nutritionix API<br/>Calories]
+    end
+
+    subgraph Docker Compose
+        subgraph Frontend
+            streamlit[Streamlit<br/>:8501]
+        end
+
+        subgraph Backend
+            fastapi[FastAPI + Uvicorn<br/>:8000]
+            langgraph[LangGraph<br/>Agent Orchestration]
+        end
+
+        subgraph Storage
+            postgres[(PostgreSQL<br/>:5432)]
+            redis[(Redis<br/>:6379)]
+        end
+
+        subgraph Observability
+            phoenix[Arize Phoenix<br/>:6006]
+        end
+
+        subgraph Admin
+            pgadmin[pgAdmin<br/>:5050]
+        end
+    end
+
+    user -->|HTTP| streamlit
+    streamlit -->|REST API| fastapi
+    fastapi --> langgraph
+    langgraph -->|Checkpointing| postgres
+    langgraph -->|Caching| redis
+    langgraph -->|OTEL Traces| phoenix
+    langgraph -->|Completion| llm
+    langgraph -->|Recipe Search| mealdb
+    langgraph -->|Calorie Data| nutritionix
+    postgres -->|User Profiles<br/>Chat History| langgraph
+    pgadmin -.->|Admin| postgres
+
