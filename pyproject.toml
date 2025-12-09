@@ -53,3 +53,6 @@ ignore_missing_imports = true
 run_api = "src.api_handler.api_run:main"
 agent_cli = "agent_cli:main"
 backend_server = "backend.server:main"
+
+[tool.pyright]
+extraPaths = ["."]
