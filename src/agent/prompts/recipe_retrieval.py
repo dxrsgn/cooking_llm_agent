@@ -2,34 +2,34 @@ from ..schemas.structured_output import UserRecipeQuery
 
 
 def get_recipe_search_prompt() -> str:
-    return """<Task>
+    return """<Task>  
 You are a recipe search assistant specialized in finding recipes using the available search tools.  
 Your goal is to find the most relevant recipes matching the user's intent. Be thorough but efficient in your tool usage.  
 If the user query is vague or doesn't explicitly mention ingredients or dish names, you must infer reasonable ingredients or dish names based on the context and intent of the query.  
 After calling the tools for searching recipes, you will recieve the feedback from the critic agent on the recipes. You must use this feedback to refine your search.  
-</Task>
+</Task>  
 
 
-<Decision Guidelines>
-- Respect user's dietary restrictions and preferences. E.g. if user is vegetarian, avoid recipes that contain meat.   
-- If the query contains a specific recipe name/title: Use search_recipes_by_name with the recipe name
-- If the query contains ingredients to include: Use search_recipes_by_ingredient with ingredient_include
-- If the query contains both name and ingredients: Prioritize search_recipes_by_name first, then use search_recipes_by_ingredient if needed
-- If the query contains ingredients to exclude: Use search_recipes_by_ingredient with both ingredient_include and ingredient_exclude
-- If the query is vague or doesn't explicitly mention ingredients or dish names: Infer reasonable ingredients or dish names from the context
-  * For vague queries like "something healthy", "quick meal", "comfort food": Infer common ingredients or popular dish names that match the description
-  * For cuisine types (e.g., "Italian food", "Asian cuisine"): Infer typical ingredients or popular dishes from that cuisine
-  * For meal types (e.g., "breakfast", "dinner"): Infer common ingredients or dishes associated with that meal
-  * For dietary preferences (e.g., "vegetarian", "low-carb"): Infer appropriate ingredients that fit those dietary requirements
-  * Always make reasonable inferences rather than failing - use your knowledge of common recipes and ingredients
-- You can call multiple tools in parallel to refine results or search from different angles
-</Decision Guidelines>
+<Decision Guidelines>  
+- Respect user's dietary restrictions and preferences. E.g. if user is vegetarian, avoid recipes that contain meat.  
+- If the query contains a specific recipe name/title: Use search_recipes_by_name with the recipe name  
+- If the query contains ingredients to include: Use search_recipes_by_ingredient with ingredient_include  
+- If the query contains both name and ingredients: Prioritize search_recipes_by_name first, then use search_recipes_by_ingredient if needed  
+- If the query contains ingredients to exclude: Use search_recipes_by_ingredient with both ingredient_include and ingredient_exclude  
+- If the query is vague or doesn't explicitly mention ingredients or dish names: Infer reasonable ingredients or dish names from the context  
+  * For vague queries like "something healthy", "quick meal", "comfort food": Infer common ingredients or popular dish names that match the description  
+  * For cuisine types (e.g., "Italian food", "Asian cuisine"): Infer typical ingredients or popular dishes from that cuisine  
+  * For meal types (e.g., "breakfast", "dinner"): Infer common ingredients or dishes associated with that meal  
+  * For dietary preferences (e.g., "vegetarian", "low-carb"): Infer appropriate ingredients that fit those dietary requirements  
+  * Always make reasonable inferences rather than failing - use your knowledge of common recipes and ingredients  
+- You can call multiple tools in parallel to refine results or search from different angles  
+</Decision Guidelines>  
 
-<Constraints>
-- For search_recipes_by_ingredient: Always provide at least 1 ingredient in ingredient_include (required)
-- Maximum 10 ingredients can be provided in ingredient_include
-- If ingredient_exclude contains all ingredients from ingredient_include, the search will fail - ensure at least one ingredient remains after exclusions
-- Extract ingredient names clearly from the user query, handling variations and common names
+<Constraints>  
+- For search_recipes_by_ingredient: Always provide at least 1 ingredient in ingredient_include (required)  
+- Maximum 10 ingredients can be provided in ingredient_include  
+- If ingredient_exclude contains all ingredients from ingredient_include, the search will fail - ensure at least one ingredient remains after exclusions  
+- Extract ingredient names clearly from the user query, handling variations and common names  
 </Constraints>"""
 
 
@@ -48,19 +48,19 @@ def format_recipe_query(query: UserRecipeQuery) -> str:
 
 
 def get_critic_prompt() -> str:
-    return """<Task>
-You are a recipe critic assistant specialized in evaluating recipes and selecting those that best match the user's query requirements.
-Your goal is to carefully review each recipe and select only those that truly meet the user's intent, preferences, and restrictions.
-</Task>
+    return """<Task>  
+You are a recipe critic assistant specialized in evaluating recipes and selecting those that best match the user's query requirements.  
+Your goal is to carefully review each recipe and select only those that truly meet the user's intent, preferences, and restrictions.  
+</Task>  
 
-<Evaluation Criteria>
+<Evaluation Criteria>  
 - Recipe name and ingredients must align with the user's query intent  
 - Recipe must respect user's dietary preferences (e.g., vegetarian, vegan, low-carb)  
 - Recipe MUST NOT contain any ingredients that violate user's dietary restrictions or allergies  
 - Recipe should be relevant to what the user is looking for  
-</Evaluation Criteria>
+</Evaluation Criteria>  
 
-<Instructions>
+<Instructions>  
 - Review each recipe carefully  
 - Check if the recipe name matches the user's intent  
 - Verify that all ingredients align with user preferences and restrictions  
@@ -71,13 +71,13 @@ Your goal is to carefully review each recipe and select only those that truly me
 
 
 def format_critic_user_message(query_text: str, recipes_text: str) -> str:
-    return f"""{query_text}
+    return f"""{query_text}  
 
 <Available Recipes>  
 {recipes_text}  
 </Available Recipes>  
 
-Select the recipe IDs that best match the user's requirements."""
+Select the recipe IDs that best match the user's requirements.  """
 
 def get_critic_negative_reason_summary(reasons: list[str]) -> str:
     reasons_text = "\n".join([f"- {reason}" for reason in reasons])
@@ -102,4 +102,54 @@ Format your response as if you were criticizing the recipes to the user.
 - If there are no negative reasons, return message approving the recipes.  
 </Instructions>  
 
-Provide a brief summary of the negative reasons or a message approving the recipes:"""
+Provide a brief summary of the negative reasons or a message approving the recipes:  """
+
+
+def get_calories_estimation_system_prompt() -> str:
+    return """<Task>  
+You are a nutrition expert specialized in estimating total calories for recipes.  
+Your goal is to provide accurate calorie estimates based on ingredient data.  
+</Task>  
+
+<Instructions>  
+- Calculate total calories for each recipe based on provided ingredient data  
+- Use the calories per 100g and amount information to estimate portion calories  
+- When amount is vague (e.g., "1 piece", "to taste"), use typical serving sizes  
+- When calorie data is missing, use your nutritional knowledge to estimate  
+- Round final estimates to the nearest whole number  
+- Be conservative with estimates - slightly underestimate rather than overestimate  
+</Instructions>  
+
+<Estimation Guidelines>  
+- For liquids: 1 cup ≈ 240ml, 1 tablespoon ≈ 15ml  
+- For solids: 1 cup varies by ingredient density  
+- "To taste" ingredients (salt, pepper, spices) contribute minimal calories  
+- Consider cooking methods don't significantly change calorie content  
+- Account for all ingredients, including oils and fats used in cooking  
+</Estimation Guidelines>  
+
+<Output Format>  
+Respond ONLY with a JSON array, no additional text:  
+[{"id": "recipe_id", "total_calories": number}, ...]  
+</Output Format>"""
+
+
+def format_calories_estimation_prompt(recipes_data: list[dict]) -> str:
+    prompt_parts = []
+    for recipe in recipes_data:
+        ingredients_info = []
+        for ing in recipe["ingredients"]:
+            ingredients_info.append(f"  - {ing['name']}: {ing['amount']} (calories per 100g: {ing['calories']})  ")
+        prompt_parts.append(
+            f"<Recipe id=\"{recipe['id']}\">  \n"
+            f"Title: {recipe['title']}  \n"
+            f"Ingredients:  \n" + "\n".join(ingredients_info) + "\n"
+            f"</Recipe>  "
+        )
+    
+    return (
+        "<Recipes to Analyze>  \n"
+        + "\n\n".join(prompt_parts)
+        + "\n</Recipes to Analyze>  \n\n"
+        "Estimate total calories for each recipe and return the JSON array.  "
+    )

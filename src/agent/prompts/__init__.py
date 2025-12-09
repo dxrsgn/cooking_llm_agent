@@ -8,6 +8,8 @@ from .recipe_retrieval import (
     get_critic_prompt,
     format_critic_user_message,
     get_critic_negative_reason_summary,
+    get_calories_estimation_system_prompt,
+    format_calories_estimation_prompt,
 )
 
 __all__ = [
@@ -18,4 +20,6 @@ __all__ = [
     "get_critic_prompt",
     "format_critic_user_message",
     "get_critic_negative_reason_summary",
+    "get_calories_estimation_system_prompt",
+    "format_calories_estimation_prompt",
 ]
