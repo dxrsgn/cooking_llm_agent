@@ -30,7 +30,12 @@ async def critic_agent_node(state: RecipeSearchSubgraphState, config: Optional[R
 
     async def process_batch(batch) -> RecipeSelection:
         recipes_text = "\n".join([
-            f"Recipe ID: {recipe.id}\nTitle: {recipe.title}\nIngredients: {', '.join([ing.name for ing in recipe.ingredients])}\n"
+            (
+                f"Recipe ID: {recipe.id}\n"
+                f"Title: {recipe.title}\n"
+                f"Ingredients: {', '.join([ing.name for ing in recipe.ingredients])}\n"
+                f"Total Calories: {recipe.total_calories}\n"
+            )
             for recipe in batch
         ])
         query = state.user_recipe_query

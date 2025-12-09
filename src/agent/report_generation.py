@@ -23,6 +23,10 @@ async def report_generation_node(state: AgentState, config: Optional[RunnableCon
             else:
                 lines.append(f"- {ingredient.name}  \n")
         lines.append("\n")
+        if recipe.total_calories:
+            lines.append(f"**Total Calories:** {recipe.total_calories}  \n\n")
+        else:
+            lines.append("**Total Calories:** Not available  \n\n")
         if recipe.instructions:
             lines.append(f"**Description:**\n{recipe.instructions}  \n\n")
         else:
