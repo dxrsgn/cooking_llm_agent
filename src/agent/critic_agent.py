@@ -75,7 +75,7 @@ async def critic_agent_node(state: RecipeSearchSubgraphState, config: Optional[R
 
 def route_after_critic(state: RecipeSearchSubgraphState):
     # if no recipes found, go back to recipe search
-    if not state.current_recipes:
+    if not state.selected_recipes:
         return "recipe_search_agent"
     # take at least 2 iterations to get the best recipes
     if state.iterations < 2:
