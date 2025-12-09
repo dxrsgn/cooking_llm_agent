@@ -24,6 +24,6 @@ FROM users WHERE login = 'user1'
 ON CONFLICT (user_id) DO NOTHING;
 
 INSERT INTO user_profiles (user_id, last_queries, preferences, allergies)
-SELECT id, '[]', '["vegan"]', '["gluten", "dairy"]'
+SELECT id, '[]', '["vegan"]', '["shellfish"]'
 FROM users WHERE login = 'user2'
 ON CONFLICT (user_id) DO NOTHING;
