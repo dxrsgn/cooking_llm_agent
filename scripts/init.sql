@@ -15,7 +15,8 @@ CREATE TABLE IF NOT EXISTS user_profiles (
 
 INSERT INTO users (login, password) VALUES
     ('user1', 'password1'),
-    ('user2', 'password2')
+    ('user2', 'password2'),
+    ('test', 'test')
 ON CONFLICT (login) DO NOTHING;
 
 INSERT INTO user_profiles (user_id, last_queries, preferences, allergies)
