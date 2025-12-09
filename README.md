@@ -5,6 +5,8 @@ A multi-agent system that helps you discover recipes based on your preferences, 
 **Authors:** Turushev Timur, Egor Shmelev, Ran Duan, Jorge Sosa  
 **Course:** ML in Industry (ITMO)
 
+![Demo](docs/demo.gif)
+
 ## Key Features
 
 - **Personalization** — Stores your preferences, allergies, and query history to tailor recipe recommendations
