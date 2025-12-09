@@ -1,4 +1,17 @@
 services:
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
   db:
     image: postgres:16-alpine
     environment:
@@ -31,12 +44,15 @@ services:
     environment:
       POSTGRES_URI: postgresql://postgres:postgres@db:5432/langgraph
       DATABASE_URL: postgresql+psycopg://postgres:postgres@db:5432/langgraph
+      REDIS_URL: redis://redis:6379
       OTEL_EXPORTER_OTLP_ENDPOINT: http://phoenix:6006
       OTEL_EXPORTER_OTLP_TRACES_ENDPOINT: http://phoenix:6006/v1/traces
     ports:
       - "8000:8000"
     depends_on:
       db:
+        condition: service_healthy
+      redis:
         condition: service_healthy
       phoenix:
         condition: service_started
@@ -65,3 +81,4 @@ services:
 
 volumes:
   postgres_data:
+  redis_data:

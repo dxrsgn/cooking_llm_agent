@@ -9,7 +9,9 @@ from phoenix.otel import register
 from opentelemetry.instrumentation.httpx import HTTPXClientInstrumentor
 from openinference.instrumentation.langchain import LangChainInstrumentor
 
-from backend.config import POSTGRES_URI
+from redis.asyncio import Redis
+
+from backend.config import POSTGRES_URI, REDIS_URL
 from backend.schemas import GraphRequest, GraphResponse, LoginRequest, LoginResponse
 from backend.dependencies import app_state
 from backend.services import (
@@ -21,6 +23,7 @@ from backend.services import (
 from src.agent.graph import build_graph
 from src.database.crud import init_db, get_session, get_user_by_login, get_profile_by_user_id, update_profile
 from src.api_handler.recipes_client import RecipesAPIClient
+from src.api_handler.nutrition_client import NutritionAPIClient
 
 tracer_provider = register(project_name="aboba", auto_instrument=False)
 LangChainInstrumentor().instrument(tracer_provider=tracer_provider)
@@ -34,9 +37,13 @@ async def lifespan(app: FastAPI):
     app_state.checkpointer = AsyncPostgresSaver(app_state.pool)
     await app_state.checkpointer.setup()
     app_state.graph = build_graph(checkpointer=app_state.checkpointer)
-    app_state.recipes_client = RecipesAPIClient()
+    app_state.redis = Redis.from_url(REDIS_URL)
+    app_state.recipes_client = RecipesAPIClient(redis=app_state.redis)
+    app_state.nutrition_client = NutritionAPIClient(redis=app_state.redis)
     yield
+    await app_state.redis.close()
     await app_state.recipes_client.close()
+    await app_state.nutrition_client.close()
     await app_state.pool.close()
 
 

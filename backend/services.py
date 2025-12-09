@@ -17,7 +17,9 @@ def build_graph_config(thread_id: str) -> RunnableConfig:
             "llm_api_key": LLM_API_KEY,
             "llm_api_url": LLM_API_URL,
             "reasoning": LLM_REASONING,
-            "recipes_client": app_state.recipes_client
+            "recipes_client": app_state.recipes_client,
+            "nutrition_client": app_state.nutrition_client,
+            "redis": app_state.redis,
         }
     }
 

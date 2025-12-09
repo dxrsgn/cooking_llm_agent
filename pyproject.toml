@@ -2,7 +2,7 @@
 name = "cooking-llm-agent"
 version = "0.1.0"
 description = "cooking llm agent"
-authors = ["eshmelev"]
+authors = ["eshmelev", "tturushev", "rduan", "jsosa"]
 packages = [{include = "src"}]
 
 [tool.poetry.dependencies]
@@ -22,6 +22,7 @@ opentelemetry-instrumentation-httpx = "*"
 openinference-instrumentation-langchain = "*"
 fastapi = "^0.115.0"
 uvicorn = "^0.32.0"
+redis = "^5.0.0"
 
 
 [tool.poetry.group.dev.dependencies]

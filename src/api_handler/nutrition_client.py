@@ -1,15 +1,17 @@
 import re
 import httpx
-from async_lru import alru_cache
+from redis.asyncio import Redis
 from tenacity import retry, stop_after_attempt, wait_exponential
 
 from src.api_handler.constants import NUTRITION_URL
+from src.api_handler.cache import redis_cache
 
 
 class NutritionAPIClient:
     base_url = NUTRITION_URL
 
-    def __init__(self):
+    def __init__(self, redis: Redis | None = None):
+        self._redis = redis
         self._client = httpx.AsyncClient(timeout=10)
 
     async def close(self):
@@ -22,8 +24,8 @@ class NutritionAPIClient:
         name = re.sub(r"\s+", " ", name).strip()
         return name
 
+    @redis_cache(prefix="nutrition", ttl=86400)
     @retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=4, max=15))
-    @alru_cache(maxsize=128)
     async def get_nutrition(self, ingredient_name: str) -> None | dict:
         params = {
             "search_terms": ingredient_name,
