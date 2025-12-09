@@ -12,7 +12,7 @@ class NutritionAPIClient:
 
     def __init__(self, redis: Redis | None = None):
         self._redis = redis
-        self._client = httpx.AsyncClient(timeout=10)
+        self._client = httpx.AsyncClient(timeout=5)
 
     async def close(self):
         await self._client.aclose()

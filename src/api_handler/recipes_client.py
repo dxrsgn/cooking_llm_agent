@@ -95,18 +95,27 @@ class RecipesAPIClient:
         candidates: list[Recipe] = []
 
         if query.query_text:
-            candidates.extend(self._to_recipes(await self._search_by_name(query.query_text)))
+            try:
+                candidates.extend(self._to_recipes(await self._search_by_name(query.query_text)))
+            except Exception as e:
+                print(f"Error searching by name: {e}")
 
         if query.area:
-            candidates.extend(self._to_recipes(await self._search_by_area(query.area)))
+            try:
+                candidates.extend(self._to_recipes(await self._search_by_area(query.area)))
+            except Exception as e:
+                print(f"Error searching by area: {e}")
 
         if query.include_ingredients:
             batch_size = self.batch_size
             for i in range(0, len(query.include_ingredients), batch_size):
                 batch = query.include_ingredients[i:i + batch_size]
                 tasks = [self._search_by_ingredient(ing) for ing in batch]
-                results = await asyncio.gather(*tasks)
+                results = await asyncio.gather(*tasks, return_exceptions=True)
                 for part in results:
+                    if isinstance(part, BaseException):
+                        print(f"Error searching by ingredient: {part}")
+                        continue
                     candidates.extend(self._to_recipes(part))
 
         unique: dict[str, Recipe] = {}
