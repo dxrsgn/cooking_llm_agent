@@ -28,7 +28,7 @@ class RecipesAPIClient:
     async def close(self):
         await self._client.aclose()
 
-    @redis_cache(prefix="recipes:lookup", ttl=3600)
+    @redis_cache(prefix="recipes:lookup", ttl=86400)
     @retry(stop=stop_after_attempt(5), wait=wait_exponential(multiplier=1, min=2, max=30))
     async def _lookup_by_id(self, meal_id: str) -> dict | None:
         r = await self._client.get("/lookup.php", params={"i": meal_id})
@@ -38,7 +38,7 @@ class RecipesAPIClient:
             return map_mealdb_meal_to_recipe(meals[0]).model_dump()
         return None
 
-    @redis_cache(prefix="recipes:name", ttl=3600)
+    @redis_cache(prefix="recipes:name", ttl=86400)
     @retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=8, max=15))
     async def _search_by_name(self, query: str) -> list[dict]:
         resp = await self._client.get("/search.php", params={"s": query})
@@ -47,7 +47,7 @@ class RecipesAPIClient:
         meals = data.get("meals") or []
         return [map_mealdb_meal_to_recipe(m).model_dump() for m in meals]
 
-    @redis_cache(prefix="recipes:ingredient", ttl=3600)
+    @redis_cache(prefix="recipes:ingredient", ttl=86400)
     @retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=8, max=15))
     async def _search_by_ingredient(self, ingredient: str) -> list[dict]:
         resp = await self._client.get("/filter.php", params={"i": ingredient})
@@ -66,7 +66,7 @@ class RecipesAPIClient:
 
         return recipes
 
-    @redis_cache(prefix="recipes:area", ttl=3600)
+    @redis_cache(prefix="recipes:area", ttl=86400)
     @retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=8, max=15))
     async def _search_by_area(self, area: str) -> list[dict]:
         resp = await self._client.get("/filter.php", params={"a": area})
