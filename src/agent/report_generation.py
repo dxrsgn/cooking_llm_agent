@@ -15,18 +15,18 @@ async def report_generation_node(state: AgentState, config: Optional[RunnableCon
         }
     lines = ["Here are the recipes that match your query requirements:\n\n"]
     for recipe in state.selected_recipes:
-        lines.append(f"## {recipe.title}\n\n")
-        lines.append("**Ingredients:**\n")
+        lines.append(f"## {recipe.title}  \n\n")
+        lines.append("**Ingredients:**  \n")
         for ingredient in recipe.ingredients:
             if ingredient.amount:
-                lines.append(f"- {ingredient.name} ({ingredient.amount})")
+                lines.append(f"- {ingredient.name} ({ingredient.amount})  \n")
             else:
-                lines.append(f"- {ingredient.name}")
+                lines.append(f"- {ingredient.name}  \n")
         lines.append("\n")
         if recipe.instructions:
-            lines.append(f"**Description:**\n{recipe.instructions}\n\n")
+            lines.append(f"**Description:**\n{recipe.instructions}  \n\n")
         else:
-            lines.append("**Description:** Not available\n\n")
+            lines.append("**Description:** Not available  \n\n")
     lines.append("If you don't like any of the recipes, please try again with different query.")
     
     return {
