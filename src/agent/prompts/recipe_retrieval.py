@@ -16,9 +16,11 @@ After calling the tools for searching recipes, you will recieve the feedback fro
 - If the query contains ingredients to include: Use search_recipes_by_ingredient with ingredient_include  
 - If the query contains both name and ingredients: Prioritize search_recipes_by_name first, then use search_recipes_by_ingredient if needed  
 - If the query contains ingredients to exclude: Use search_recipes_by_ingredient with both ingredient_include and ingredient_exclude  
+- If the query mentions a cuisine/area (e.g., "Italian", "Mexican", "Chinese", "Indian"): Use search_recipes_by_area with the area name  
+  * Can be combined with ingredient_exclude to filter out unwanted ingredients  
 - If the query is vague or doesn't explicitly mention ingredients or dish names: Infer reasonable ingredients or dish names from the context  
   * For vague queries like "something healthy", "quick meal", "comfort food": Infer common ingredients or popular dish names that match the description  
-  * For cuisine types (e.g., "Italian food", "Asian cuisine"): Infer typical ingredients or popular dishes from that cuisine  
+  * For cuisine types (e.g., "Italian food", "Asian cuisine"): Use search_recipes_by_area with the cuisine area  
   * For meal types (e.g., "breakfast", "dinner"): Infer common ingredients or dishes associated with that meal  
   * For dietary preferences (e.g., "vegetarian", "low-carb"): Infer appropriate ingredients that fit those dietary requirements  
   * Always make reasonable inferences rather than failing - use your knowledge of common recipes and ingredients  

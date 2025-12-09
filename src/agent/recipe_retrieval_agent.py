@@ -12,7 +12,7 @@ from .utils import create_llm
 from .prompts import get_recipe_search_prompt, format_recipe_query
 from .calorie_enrichment_agent import enrich_and_estimate_calories_node
 from src.agent.critic_agent import critic_agent_node, route_after_critic
-from src.tools.recipes_tools import search_recipes_by_name, search_recipes_by_ingredient, RecipeSearchResult
+from src.tools.recipes_tools import search_recipes_by_name, search_recipes_by_ingredient, search_recipes_by_area, RecipeSearchResult
 
 
 async def recipe_search_agent_node(state: RecipeSearchSubgraphState, config: Optional[RunnableConfig] = None) -> Command:
@@ -32,7 +32,7 @@ async def recipe_search_agent_node(state: RecipeSearchSubgraphState, config: Opt
         max_tokens=4096,
     )
     
-    tools = [search_recipes_by_name, search_recipes_by_ingredient]
+    tools = [search_recipes_by_name, search_recipes_by_ingredient, search_recipes_by_area]
     llm_with_tools = llm.bind_tools(tools)
     
     query = state.user_recipe_query
@@ -101,7 +101,7 @@ async def tool_post_process(state: RecipeSearchSubgraphState, config: Optional[R
 
 
 def build_recipe_retrieval_graph(checkpointer=None):
-    tools = [search_recipes_by_name, search_recipes_by_ingredient]
+    tools = [search_recipes_by_name, search_recipes_by_ingredient, search_recipes_by_area]
     tool_node = ToolNode(tools)
     
     graph = StateGraph(RecipeSearchSubgraphState)

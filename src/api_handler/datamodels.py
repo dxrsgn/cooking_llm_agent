@@ -19,9 +19,10 @@ class RecipeSearchQuery(BaseModel):
     query_text: None | str = None
     include_ingredients: list[str] = []
     exclude_ingredients: list[str] = []
+    area: None | str = None
 
     def is_valid(self) -> bool:
-        return bool(self.query_text or self.include_ingredients)
+        return bool(self.query_text or self.include_ingredients or self.area)
 
 
 class RecipeCalories(BaseModel):

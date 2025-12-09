@@ -52,14 +52,36 @@ class RecipesAPIClient:
 
         return recipes
 
+    @alru_cache(maxsize=128)
+    @retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=8, max=15))
+    async def _search_by_area(self, area: str) -> list[Recipe]:
+        resp = await self._client.get("/filter.php", params={"a": area})
+        resp.raise_for_status()
+        data = resp.json()
+        meals = data.get("meals") or []
+
+        ids = [m["idMeal"] for m in meals]
+        recipes: list[Recipe] = []
+
+        for meal_id in ids[: self.max_recipes]:
+            r = await self._client.get("/lookup.php", params={"i": meal_id})
+            r.raise_for_status()
+            meal = r.json()["meals"][0]
+            recipes.append(map_mealdb_meal_to_recipe(meal))
+
+        return recipes
+
     async def search(self, query: RecipeSearchQuery) -> list[Recipe]:
         if not query.is_valid():
-            raise ValueError("Provide query_text or include_ingredients")
+            raise ValueError("Provide query_text, include_ingredients, or area")
 
         candidates: list[Recipe] = []
 
         if query.query_text:
             candidates.extend(await self._search_by_name(query.query_text))
+
+        if query.area:
+            candidates.extend(await self._search_by_area(query.area))
 
         if query.include_ingredients:
             batch_size = self.batch_size

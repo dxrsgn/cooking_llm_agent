@@ -54,6 +54,25 @@ class SearchRecipesByIngredientInput(BaseModel):
             self.ingredient_include = remaining_ingredients
         return self
 
+class SearchRecipesByAreaInput(BaseModel):
+    area: str = Field(
+        ...,
+        description=(
+            "The cuisine area/region to search for recipes from. "
+            "Must be a valid area name like 'Italian', 'Mexican', 'Chinese', 'Indian', 'Japanese', etc."
+        ),
+        examples=[["Italian", "Mexican", "Chinese", "Indian", "Japanese", "Canadian", "British"]]
+    )
+    ingredient_exclude: list[str] | None = Field(
+        description=(
+            "List of ingredient names to exclude from search results. "
+            "Must be real ingredient names, not common names or variations."
+        ),
+        default=None,
+        examples=[["chicken", "beef", "pork", "fish"]]
+    )
+
+
 class RecipeSearchResult(BaseModel):
     recipes: list[Recipe] = Field(description="List of recipes matching the search criteria")
 
@@ -88,6 +107,26 @@ async def search_recipes_by_ingredient(
         raise ValueError("recipes_client not found in config")
     recipes = await client.search(RecipeSearchQuery(
         include_ingredients=ingredient_include,
+        exclude_ingredients=ingredient_exclude or []
+    ))
+    result = RecipeSearchResult(recipes=recipes)
+    return result.model_dump()
+
+
+@tool(
+    args_schema=SearchRecipesByAreaInput,
+    description="Search for recipes from a specific cuisine area/region"
+)
+async def search_recipes_by_area(
+    area: str,
+    config: RunnableConfig,
+    ingredient_exclude: list[str] | None = None,
+) -> dict:
+    client = config.get("configurable", {}).get("recipes_client")
+    if not client:
+        raise ValueError("recipes_client not found in config")
+    recipes = await client.search(RecipeSearchQuery(
+        area=area,
         exclude_ingredients=ingredient_exclude or []
     ))
     result = RecipeSearchResult(recipes=recipes)
