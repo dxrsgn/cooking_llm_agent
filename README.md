@@ -28,8 +28,9 @@ The Recipe Retrieval and Critic agents form a **ReAct-style loop**: the retrieva
 | **Clarification** | Human-in-the-loop: asks follow-up questions until requirements are clear |
 | **Schema Generation** | Planning stage: summarizes conversation into structured `UserRecipeQuery` |
 | **Recipe Retrieval** | Searches recipes by name, ingredients, or cuisine area |
+| **Nutritional info enrichment** | Enrich ingridients in selected recipes with nutritional info |
 | **Critic** | Evaluates and filters recipes, provides feedback for next iteration |
-| **Report Generation** | Formats selected recipes with ingredients, calories, and instructions |
+| **Report Generation** | Formats selected recipes with ingredients, calories, and instructions (no LLM calls) |
 
 ## Tech Stack
 
@@ -49,32 +50,16 @@ The Recipe Retrieval and Critic agents form a **ReAct-style loop**: the retrieva
 - PostgreSQL
 - OpenAI API key (or compatible LLM endpoint)
 
-### Installation
-
-```bash
-# Install dependencies
-poetry install
-
-# Set environment variables
-cp .env.example .env
-# Edit .env with your API keys
-
-# Start with Docker
-docker-compose up -d
-```
-
 ### Running
 
 ```bash
-# CLI mode
-poetry run agent_cli
+# Set environment variables
+cp .env.example .env
 
-# Backend server
-poetry run backend_server
-
-# Frontend
-cd frontend && streamlit run app.py
+# Start Docker
+docker-compose up -d
 ```
+After start of compose, you can see frontend chat at `http://localhost:8501/`  
 
 ## LangGraph Tools
 
@@ -91,7 +76,7 @@ The agent can call these tools multiple times in a single session, combining res
 ### Calorie Enrichment
 
 Calorie calculation is implemented as a **static graph node**, not a dynamic tool. It runs automatically after recipe retrieval:
-1. Fetches per-ingredient calorie data from Nutritionix API
+1. Fetches per-ingredient calorie data from OpenFoodFacts API
 2. Uses LLM to estimate total calories based on ingredient amounts
 3. Enriches recipe objects before passing to the critic
 
@@ -100,7 +85,7 @@ Calorie calculation is implemented as a **static graph node**, not a dynamic too
 The system maintains user profiles with:
 - **Preferences** — Favorite cuisines, cooking styles
 - **Allergies** — Ingredients to always exclude
-- **History** — Previous queries for context
+- **History** — Previous sumarized queries for context
 
 ## Project Structure
 
