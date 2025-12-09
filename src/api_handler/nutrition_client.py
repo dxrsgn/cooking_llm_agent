@@ -47,7 +47,7 @@ class NutritionAPIClient:
                         "brands": product.get("brands"),
                         "url": product.get("url"),
                     }
-        except Exception as e:
-            print(e)
-            pass
-        return None
+        except httpx.HTTPStatusError:
+            raise
+        except Exception:
+            return None
