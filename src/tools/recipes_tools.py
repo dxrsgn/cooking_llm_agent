@@ -1,8 +1,11 @@
+import random
 from langchain_core.tools import tool
 from langchain_core.runnables import RunnableConfig
 from typing import List
 from pydantic import BaseModel, Field, model_validator
 from src.api_handler.datamodels import Recipe, RecipeSearchQuery
+
+MAX_RECIPES = 10
 
 
 class SearchRecipesByNameInput(BaseModel):
@@ -23,10 +26,10 @@ class SearchRecipesByIngredientInput(BaseModel):
         description=(
             "List of ingredient names to exclude from search results. " 
             "Must be real ingredient names, not common names or variations. "
-            "E.g. ['vegetarian', 'high protein'] are not valid ingredient names."
+            "E.g. ['vegetarian', 'high protein', 'meat', 'fish', 'dairy'] are not valid ingredient names."
         ),
         default=None,
-        examples=[["chicken", "beef", "pork", "fish"]]
+        examples=[["chicken", "beef", "pork", "salmon"]]
     )
     ingredient_include: list[str] = Field(
         ...,
@@ -35,11 +38,11 @@ class SearchRecipesByIngredientInput(BaseModel):
             "At least one ingredient must be provided. "
             "Maximum of 10 ingredients can be provided. "
             "Must be real ingredient names, not common names or variations. "
-            "E.g. ['vegetarian', 'high protein'] are not valid ingredient names."
+            "E.g. ['vegetarian', 'high protein', 'meat', 'fish', 'dairy'] are not valid ingredient names."
         ),
         min_length=1,
         max_length=10,
-        examples=[["chicken", "beef", "pork", "fish"]]
+        examples=[["chicken", "beef", "pork", "salmon"]]
     )
 
     @model_validator(mode="after")
@@ -66,10 +69,11 @@ class SearchRecipesByAreaInput(BaseModel):
     ingredient_exclude: list[str] | None = Field(
         description=(
             "List of ingredient names to exclude from search results. "
-            "Must be real ingredient names, not common names or variations."
+            "Must be real ingredient names, not common names or variations. "
+            "E.g. ['vegetarian', 'high protein', 'meat', 'fish', 'dairy'] are not valid ingredient names."
         ),
         default=None,
-        examples=[["chicken", "beef", "pork", "fish"]]
+        examples=[["chicken", "beef", "pork", "salmon"]]
     )
 
 
@@ -88,6 +92,9 @@ async def search_recipes_by_name(
     if not client:
         raise ValueError("recipes_client not found in config")
     recipes = await client.search(RecipeSearchQuery(query_text=query))
+    # select N random in order not to overload the LLM
+    if len(recipes) > MAX_RECIPES:
+        recipes = random.sample(recipes, MAX_RECIPES)
     result = RecipeSearchResult(recipes=recipes)
     return result.model_dump()
 
@@ -109,6 +116,9 @@ async def search_recipes_by_ingredient(
         include_ingredients=ingredient_include,
         exclude_ingredients=ingredient_exclude or []
     ))
+    # select N random in order not to overload the LLM
+    if len(recipes) > MAX_RECIPES:
+        recipes = random.sample(recipes, MAX_RECIPES)
     result = RecipeSearchResult(recipes=recipes)
     return result.model_dump()
 
@@ -129,5 +139,8 @@ async def search_recipes_by_area(
         area=area,
         exclude_ingredients=ingredient_exclude or []
     ))
+    # select N random in order not to overload the LLM
+    if len(recipes) > MAX_RECIPES:
+        recipes = random.sample(recipes, MAX_RECIPES)
     result = RecipeSearchResult(recipes=recipes)
     return result.model_dump()
