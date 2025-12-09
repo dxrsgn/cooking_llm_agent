@@ -11,11 +11,11 @@ class UserRecipeQuery(BaseModel):
 
 class ClarificationDecision(BaseModel):
     """Schema for clarification decision"""
-    ask_more_questions: Literal["yes", "no"] = Field(
+    continue_conversation: Literal["yes", "no"] = Field(
         ...,
-        description="yes if you need to ask more questions to the user, no if you have enough information to generate the schema"
+        description="'yes' to stay in conversation (ask clarifying questions, respond to off-topic, handle non-recipe queries), 'no' to proceed to recipe search"
     )
-    question: str = Field(default="", description="The question to ask the user if ask_more_questions is True")
+    response: str = Field(default="", description="Your response or question to the user if continue_conversation is 'yes'")
 
 
 class RecipeSelection(BaseModel):

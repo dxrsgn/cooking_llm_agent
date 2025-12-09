@@ -1,5 +1,5 @@
 from typing import Optional
-from langchain_core.messages import HumanMessage, SystemMessage, get_buffer_string, AIMessage
+from langchain_core.messages import HumanMessage, SystemMessage, AIMessage, get_buffer_string
 from langchain_core.runnables.config import RunnableConfig
 from langgraph.graph import StateGraph, START, END
 from langgraph.types import interrupt, Command
@@ -24,8 +24,6 @@ async def clarification_node(state: AgentState, config: Optional[RunnableConfig]
     
     retry_runnable = StructuredRetryRunnable(llm, ClarificationDecision)
     
-    conversation_history = get_buffer_string(state.messages)
-    
     user_info = []
     if state.user_profile.preferences:
         user_info.append(f"<User preferences>{', '.join(state.user_profile.preferences)}</User preferences>  ")
@@ -40,20 +38,17 @@ async def clarification_node(state: AgentState, config: Optional[RunnableConfig]
     
     system_prompt = get_clarification_prompt(
         user_context=user_context,
-        conversation_history=conversation_history,
         reasoning=reasoning
     )
     
-    messages = [
-        SystemMessage(content=system_prompt)
-    ]
+    messages = [SystemMessage(content=system_prompt)] + list(state.messages)
     
     decision = await retry_runnable.ainvoke(messages)
     
-    if decision.ask_more_questions == "yes":
+    if decision.continue_conversation == "yes":
         return Command(
             goto="asking_question",
-            update={"messages": [AIMessage(content=decision.question)]},
+            update={"messages": [AIMessage(content=decision.response)]},
         )
     
     return Command(
