@@ -81,4 +81,6 @@ async def critic_agent_node(state: RecipeSearchSubgraphState, config: Optional[R
 def route_after_critic(state: RecipeSearchSubgraphState):
     if state.iterations >= 3:
         return END
+    if len(state.selected_recipes) >= 5:
+        return END
     return "recipe_search_agent"
