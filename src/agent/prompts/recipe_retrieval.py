@@ -102,6 +102,7 @@ Format your response as if you were criticizing the recipes to the user.
 - Be concise and specific  
 - If the reasonings are empty, return suggestion to try different queries, since data is empty.  
 - If there are no negative reasons, return message approving the recipes.  
+- Write message from first person perspective, e.g. "I think you should try these recipes..." or "These recipes are not good for you..."  
 </Instructions>  
 
 Provide a brief summary of the negative reasons or a message approving the recipes:  """

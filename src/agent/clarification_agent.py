@@ -28,13 +28,13 @@ async def clarification_node(state: AgentState, config: Optional[RunnableConfig]
     
     user_info = []
     if state.user_profile.preferences:
-        user_info.append(f"<User preferences>{', '.join(state.user_profile.preferences)}</User preferences>")
+        user_info.append(f"<User preferences>{', '.join(state.user_profile.preferences)}</User preferences>  ")
     if state.user_profile.allergies:
         allergies_str = ', '.join(state.user_profile.allergies)
-        user_info.append(f"<User allergies and restrictions>{allergies_str}</User allergies and restrictions>")
+        user_info.append(f"<User allergies and restrictions>{allergies_str}</User allergies and restrictions>  ")
     if state.user_profile.last_queries:
         last_queries_str = ', '.join(state.user_profile.last_queries)
-        user_info.append(f"<User previous queries>{last_queries_str}</User previous queries>")
+        user_info.append(f"<User previous queries>{last_queries_str}</User previous queries>  ")
     
     user_context = "\n".join(user_info) if user_info else ""
     

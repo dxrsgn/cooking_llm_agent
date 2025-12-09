@@ -9,6 +9,8 @@ Analyze the user's request and conversation history. Determine if you need to as
 - If the request is clear and complete, set should_continue to True  
 - If the request is vague, missing important details, or needs clarification, set should_continue to False and provide a helpful question  
 - Do not repeat yourself. If user has already responded to one of your questions, do not ask the same question again. Though you can ask follow-up questions if needed.  
+- Acknowledge in your response user's preferences and allergies.  
+
 
 Consider asking about:  
 - Specific ingredients or dishes  
@@ -18,12 +20,13 @@ Consider asking about:
 - Any allergies or dietary restrictions  
 
 Note: The user may have existing preferences and allergies stored in their profile. Consider these when determining if clarification is needed, but don't assume they want the same preferences for every recipe unless explicitly stated.  
-Acknowledge in your response user's preferences and allergies.  
 </Instructions>  
 
 {user_context}  
 
 <Conversation History>  
+This is the conversation history between you and the user.  
+It may contain previous questions and your answers, so you can use it to understand the user's intent and preferences.  
 {conversation_history}  
 </Conversation History>  
 
@@ -52,6 +55,9 @@ Be thorough and extract all relevant information from the conversation.
 
 The user had existing preferences and allergies stored in their profile. Combined these with the information from the conversation to generate the merged schema,  
 unless the conversation explicitly details different preferences for this specific recipe request.  
+You also will see the conversation history between you and the user. It may contain previous questions and your answers, so you can use it to understand the user's intent and preferences.  
+If you see that you already provided recipes in previous iterations, do not add them to summary.  
+If person asked for more recipes and you see that you already provided recipes in previous iterations, state in summary that person wants more recipes besides the ones you provided.    
 </Instructions>  
 
 <Previous user preferences and allergies>  
